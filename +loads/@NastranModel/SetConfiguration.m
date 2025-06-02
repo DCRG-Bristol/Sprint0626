@@ -6,6 +6,7 @@ arguments
     opts.FuelMass = obj.Taw.MTOM*obj.Taw.Mf_Fuel;
     opts.PayloadFraction = 1;
     opts.IsLocked = true;
+    opts.Rebuild = true;
     Lopts.NChord = 5;
 end
 optsCell = namedargs2cell(opts);
