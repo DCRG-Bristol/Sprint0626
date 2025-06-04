@@ -7,7 +7,7 @@ ADP.AR = 18.6;
 ADP.HingeEta = 0.7;
 ADP.FlareAngle = 15;
 ADP.ADR.M_c = 0.78;
-ADP.SweepAngle = []; % if empty will link to mach number...
+ADP.SweepAngle = 10; % if empty will link to mach number...
 ADP.ConstraintAnalysis();
 ADP.BuildBaff;
 
@@ -18,7 +18,7 @@ f = figure(1);clf;ADP.Baff.draw(f);axis equal
 ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
 sizeOpts = util.SizingOpts(IncludeGusts=true,...
-    IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
+    IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic,Include1G=true);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
 % get data during cruise
 fh.printing.title('Get Cruise Loads','Length',60)

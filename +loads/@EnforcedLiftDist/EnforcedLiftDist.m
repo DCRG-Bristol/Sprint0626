@@ -4,6 +4,13 @@ classdef EnforcedLiftDist < cast.ADP & cast.size.AbstractLoads
     
     properties
         Taw TAW
+        
+    end
+    
+    properties
+        gprMdl_locked 
+        gprMdl_unlocked
+        ranges
     end
     %jig twist
     properties
@@ -39,6 +46,14 @@ classdef EnforcedLiftDist < cast.ADP & cast.size.AbstractLoads
                 Taw TAW
             end
             obj.Taw = Taw;
+            
+            model_1 = load('GPR_WRBM_1.mat');      
+            model_2 = load('GPR_WRBM.mat');        
+            
+            obj.gprMdl_locked = model_1.gprMdl_1;    
+            obj.gprMdl_unlocked = model_2.gprMdl_2;  
+            
+            obj.ranges = model_1.ranges;
         end
     end
 end

@@ -7,7 +7,7 @@ ADP.AR = 18.6;
 ADP.HingeEta = 0.7;
 ADP.FlareAngle = 15;
 ADP.ADR.M_c = 0.78;
-ADP.SweepAngle = []; % if empty will link to mach number...
+ADP.SweepAngle = 10; % if empty will link to mach number...
 ADP.ConstraintAnalysis();
 ADP.BuildBaff;
 
