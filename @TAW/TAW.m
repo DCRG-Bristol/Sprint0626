@@ -86,6 +86,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         VTPArea = 22.17
         HTP_TCR_root = 0.15;
         SizeEmpenage = true;
+        EnableFairingStiffness = true;
     end
     %landing gear
     properties

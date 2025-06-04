@@ -73,7 +73,11 @@ for i = 1:numel(V6)
 end
 
 % Interpolation
-K_fair = interpn(V1,V2,V3,V4,V5,V6,AR,SweepAngle,HingeEta,FlareAngle, M_c); 
+if ~obj.EnableFairingStiffness
+    K_fair = 0;
+else
+    K_fair = interpn(V1,V2,V3,V4,V5,V6,AR,SweepAngle,HingeEta,FlareAngle, M_c); 
+end
 M_fair = interpn(V1,V2,V3,V4,V5,V7,AR,SweepAngle,HingeEta,FlareAngle, M_c);
 
 
