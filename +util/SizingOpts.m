@@ -17,6 +17,7 @@ classdef SizingOpts < cast.nast.Opts
         IncludePosG = true;
         IncludeZeroFuel = true;
         IncludeNegG = true;
+        Include1G = false;
         PosManoG = 2.5;
         NegManoG = -1;
         SubHarmonic = [nan,nan];
@@ -59,6 +60,7 @@ classdef SizingOpts < cast.nast.Opts
                 opts.IncludePosG = obj.IncludePosG;
                 opts.IncludeZeroFuel = obj.IncludeZeroFuel;
                 opts.IncludeNegG = obj.IncludeNegG;
+                opts.Include1G = obj.Include1G;
                 opts.PosManoG = obj.PosManoG;
                 opts.NegManoG = obj.NegManoG;
                 opts.SubHarmonic = obj.SubHarmonic;
@@ -82,6 +84,7 @@ classdef SizingOpts < cast.nast.Opts
             newObj.IncludePosG = opts.IncludePosG;
             newObj.IncludeZeroFuel = opts.IncludeZeroFuel;
             newObj.IncludeNegG = opts.IncludeNegG;
+            newObj.Include1G = opts.Include1G;
             newObj.PosManoG = opts.PosManoG;
             newObj.NegManoG = opts.NegManoG;
             newObj.SubHarmonic = opts.SubHarmonic;
@@ -106,6 +109,7 @@ classdef SizingOpts < cast.nast.Opts
                 opts.IncludePosG = true;
                 opts.IncludeZeroFuel = true;
                 opts.IncludeNegG = true;
+                opts.Include1G = false;
                 opts.PosManoG = 2.5;
                 opts.NegManoG = -1;
                 opts.WingboxMaxStep = 1;
@@ -128,6 +132,7 @@ classdef SizingOpts < cast.nast.Opts
             obj.IncludePosG = opts.IncludePosG;
             obj.IncludeZeroFuel = opts.IncludeZeroFuel;
             obj.IncludeNegG = opts.IncludeNegG;
+            obj.Include1G = opts.Include1G;
             obj.PosManoG = opts.PosManoG;
             obj.NegManoG = opts.NegManoG;
             obj.WingboxMaxStep = opts.WingboxMaxStep;
