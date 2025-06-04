@@ -48,3 +48,4 @@ bin
 
 ################################ Exceptions ###############################
 !@TAW/private/*.mat
+!+loads/@EnforcedLiftDist/private/*.mat
