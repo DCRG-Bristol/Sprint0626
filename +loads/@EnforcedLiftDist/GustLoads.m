@@ -4,6 +4,8 @@ arguments
     Case cast.LoadCase
     idx double
 end
+isLocked = Case.ConfigParams.IsLocked;
+
 % Get 1G  (Static) loads
 OneGCase = cast.LoadCase.Manoeuvre(Case.Mach,Case.Alt,1,config=Case.ConfigParams,...
         SafetyFactor=Case.SafetyFactor,Idx=Case.IdxOverride);
