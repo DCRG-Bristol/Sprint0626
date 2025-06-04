@@ -70,6 +70,11 @@ if opts.IncludePosG
             SafetyFactor=opts.SafetyFactor,Idx=2+ExtraOpts.IdxOffset);
     end
 end
+% add negative 1G manuoevre
+if opts.Include1G
+    Cases(end+1) = cast.LoadCase.Manoeuvre(obj.ADR.M_c,obj.ADR.Alt_cruise.*cast.SI.ft,1,config=config,...
+        SafetyFactor=opts.SafetyFactor,Idx=3+ExtraOpts.IdxOffset);
+end
 % add negative G manuoevre
 if opts.IncludeNegG
     Cases(end+1) = cast.LoadCase.Manoeuvre(obj.ADR.M_c,obj.ADR.Alt_cruise.*cast.SI.ft,opts.NegManoG,config=config,...
