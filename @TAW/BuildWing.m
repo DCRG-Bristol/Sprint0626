@@ -170,9 +170,10 @@ if HasFoldingWingtip
         hinge.Rotation = 0;
         hinge.A = ads.util.roty(-obj.Dihedral(end));
     end
+    [K_fair,M_fair] = obj.GetHingeFairingSurrogate();
     hinge.isLocked = 0;
     hinge.Eta = 1;
-    hinge.K = 1e-3;
+    hinge.K = 1e-3 + K_fair;
     hinge.Name = strcat("SAH",Tag);
     Wing.add(hinge);
     %create hinge mass
@@ -180,7 +181,7 @@ if HasFoldingWingtip
         hingeMass = 0;
     else
         hingeMass = SAH_massFraction(obj.HingeEta)*obj.WingMass/2;
-        hingeMass = hingeMass.* obj.k_hinge;
+        hingeMass = hingeMass.* obj.k_hinge + M_fair;
     end
     obj.Masses.HingeMass = hingeMass*2;
     SAH_mass = baff.Mass(hingeMass,"eta",1,"Name",strcat("SAH_mass",Tag));
