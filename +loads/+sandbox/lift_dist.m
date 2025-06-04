@@ -4,7 +4,7 @@ Sweep = 0:7.5:30;
 HingeEtas = [0.5,0.6,0.7,0.9];
 runs = fh.combvec(Sweep,HingeEtas,ARs);
 
-util.notify("Info",'Param Sweep Started','fintan.healy@bristol.ac.uk')
+% util.notify("Info",'Param Sweep Started','fintan.healy@bristol.ac.uk')
 data = {};
 for i = 1:size(runs,1)
     fh.printing.title(sprintf('Run %.0f of %.0f,AR %.0f, Sweep %.1f, Eta %.1f',i,size(runs,1),runs(i,3),runs(i,1),runs(i,2)));
@@ -48,9 +48,8 @@ for i = 1:size(runs,1)
         tmp.LoadFactor = [1,[Cases.LoadFactor]];
         data{i} = tmp;
     catch
-        util.notify("Info",sprintf('Run %.0f of %.0f Failed',i,size(runs,1)),'fintan.healy@bristol.ac.uk')
+        % util.notify("Info",sprintf('Run %.0f of %.0f Failed',i,size(runs,1)),'fintan.healy@bristol.ac.uk')
     end
 end
-util.notify("Complete","Param Sweep completed",'fintan.healy@bristol.ac.uk')
-save("LiftDistData.mat","data");
+save('C:\git\Sprint0626\+loads\+sandbox\LiftDistData.mat',"data")
 save("C:\Users\qe19391\OneDrive - University of Bristol\LiftDistData.mat","data");
