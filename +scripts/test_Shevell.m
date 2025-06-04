@@ -35,8 +35,8 @@ end
 
 fig = figure(1); clf;
 fig.Units = 'centimeters';
-fig.Position = [1,1,14*2,12];
-tt = tiledlayout(1,2);
+fig.Position = [1,1,14,12];
+tt = tiledlayout(1,1);
 tt.Padding = 'compact';
 tt.TileSpacing = 'compact';
 
@@ -44,8 +44,12 @@ sp = nexttile(1);
 sp.FontSize = 15;
 hold all; grid on; box on;
 
-plot(M,CD_NSP_0,'b-','DisplayName','NitaShevellPolar')
-plot(M,CD_NSP_26,'k-','DisplayName','NitaShevellPolar')
-plot(M,CD_NSP_40,'k-','DisplayName','NitaShevellPolar')
+plot(M,CD_NSP_0./0.0001,'b-','DisplayName','NitaShevellPolar','LineWidth',2)
+plot(M,CD_NSP_26./0.0001,'k-','DisplayName','NitaShevellPolar','LineWidth',2)
+plot(M,CD_NSP_40./0.0001,'k-','DisplayName','NitaShevellPolar','LineWidth',2)
 
-ylim([0 ADP.AeroSurrogate.CDw_max*2])
+ylim([0 ADP.AeroSurrogate.CDw_max*1.2./0.0001])
+
+ylabel('$\Delta C_{D_w}$ [counts]')
+xlabel('Mach')
+legend('AR 0','AR 26','AR 40','Location','northwest')
