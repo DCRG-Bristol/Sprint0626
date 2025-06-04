@@ -57,21 +57,26 @@ for i = 1:opts.MaxIter+1
     % use JDC lift dist
     load(fullfile(fileparts(mfilename('fullpath')),'private','LIFT_DISTRIBUTION_V1.mat'),'lift_dist');
     % clean lift dist
-    ys = abs([0;lift_dist.Yle;lift_dist.Yle(end)*1.001]);
-    L_eta = ys./max(ys);
+    ys_L = abs([0;lift_dist.Yle;lift_dist.Yle(end)*1.001]);
+    L_eta = ys_L./max(ys_L);
     Ls = [lift_dist.c_cl([1,1:end]);0];
-    gamma_JDC = @(eta)interp1(L_eta,Ls,eta,"makima");
+    gamma_JDC = @(eta)interp1(L_eta,Ls,abs(eta),"makima");
     A = trapz(eta,Fs)/trapz(eta,gamma_JDC(eta));
     target_lift = A.*gamma_JDC(eta);
+    % f = figure(111);clf;hold on;plot(eta,target_lift);plot(eta,target_lift2)
 
 
     %get delta between two distributions
     delta = target_lift-(Fs);
+    % delta2 = target_lift2 - Fs;
+    % f = figure(112);clf;hold on;plot(eta,delta);plot(eta,delta2)
     % re-nomralised eta so that zero at wing root and 1 at tip
     e_i = ys>=0;
     etas = eta(e_i);
     %convert delta into a required change in angle (assuming a local lift-curve-slope of 2pi)
     delta_angle = rad2deg(delta(e_i)./(q.*chords(e_i)*2*pi));
+    % delta_angle2 = rad2deg(delta(e_i)./(q.*chords(e_i)*2*pi));
+    % f = figure(113);clf;hold on;plot(eta(e_i),delta_angle);plot(eta(e_i),delta_angle2)
     delta_aoa = AoA-opts.TargetAoA;
     deltas(i) = max(abs(delta_angle).*(Fs(e_i)./max(Fs(e_i))));
     if deltas(i)<opts.TargetDelta && delta_aoa<opts.TargetDelta
