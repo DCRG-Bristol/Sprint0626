@@ -81,6 +81,7 @@ classdef NitaPolar < api.AbstractPolar
             arguments
                 obj
                 Cl
+                M
                 Phase FlightPhase = FlightPhase.Cruise;
             end
             if obj.Taw.LogCl
