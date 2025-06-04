@@ -17,8 +17,8 @@ f = figure(1);clf;ADP.Baff.draw(f);axis equal
 % conduct sizing
 ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
-sizeOpts = util.SizingOpts(IncludeGusts=false,...
-    IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
+sizeOpts = util.SizingOpts(IncludeGusts=true,...
+    IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic,Include1G=true);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
 % get data during cruise
 fh.printing.title('Get Cruise Loads','Length',60)

@@ -14,7 +14,13 @@ ADP.BuildBaff();
 ld = loads.NastranModel(ADP);
 lc = cast.LoadCase.Turbulence(ADP.ADR.M_c,ADP.ADR.Alt_cruise.*cast.SI.ft);
 ld.SetConfiguration(IsLocked=true);
+ld.BinFolder = sprintf('Bin_test', i);
 [Lds,BinFolder] = ld.TurbLoads(lc,1);
+
+try
+   system(sprintf('del "\\\\.\\%s\\%s\\Source\\nul"', pwd, BinFolder));
+catch
+end
 
 %% plot gust loads
 % h5 = mni.result.hdf5(fullfile(BinFolder,'bin','sol146.h5'));

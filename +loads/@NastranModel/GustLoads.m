@@ -13,6 +13,11 @@ end
 filename = fullfile(BinFolder,'bin','sol144.h5');
 Loads_1g = obj.ExtractStaticLoads(filename,obj.Tags).SetIdx(idx);
 
+try
+   system(sprintf('del "\\\\.\\%s\\%s\\Source\\nul"', pwd, 'Bin_test'));
+catch
+end
+
 %get incremental gust loads
 obj.Sol146(Case.Mach,Case.Alt, DispIDs=nan, TruelySilent=~obj.Verbose);
 filename = fullfile(BinFolder,'bin','sol146.h5');
