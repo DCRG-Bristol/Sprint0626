@@ -1,11 +1,11 @@
-function [doc,M_f,trip_fuel,trip_time] = MJperPAX(obj,range,payloadFactor,opts)
+function [doc,M_f,trip_fuel,trip_time,block_fuel] = MJperPAX(obj,range,payloadFactor,opts)
 arguments
     obj
     range
     payloadFactor
     opts.M_f = obj.MTOM-obj.ADR.Payload-obj.OEM;
 end
-[M_f,trip_fuel,trip_time,doc] = deal(zeros(size(range)));
+[M_f,trip_fuel,trip_time,doc,block_fuel] = deal(zeros(size(range)));
 if length(payloadFactor) == 1
     payloadFactor = ones(size(range))*payloadFactor;
 elseif length(payloadFactor) ~= length(range)
@@ -25,6 +25,7 @@ for i = 1:length(range)
         M_f(i) =  (1-EWF)/(EWF)*(obj.OEM+obj.ADR.Payload*payloadFactor(i));
     end
     trip_fuel(i) = (1-prod(fs(1:6)))*M_to;
+    block_fuel(i) = (1-prod(fs))*M_to;
     trip_time(i) = sum(ts(1:6));
     doc(i) = trip_fuel(i)*obj.FuelType.SpecificEnergy/(obj.ADR.PAX*payloadFactor(i))/(range(i));
 end

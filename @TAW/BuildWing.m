@@ -170,9 +170,10 @@ if HasFoldingWingtip
         hinge.Rotation = 0;
         hinge.A = ads.util.roty(-obj.Dihedral(end));
     end
+    [K_fair,M_fair] = obj.GetHingeFairingSurrogate();
     hinge.isLocked = 0;
     hinge.Eta = 1;
-    hinge.K = 1e-3;
+    hinge.K = 1e-3 + K_fair;
     hinge.Name = strcat("SAH",Tag);
     Wing.add(hinge);
     %create hinge mass
@@ -180,7 +181,7 @@ if HasFoldingWingtip
         hingeMass = 0;
     else
         hingeMass = SAH_massFraction(obj.HingeEta)*obj.WingMass/2;
-        hingeMass = hingeMass.* obj.k_hinge;
+        hingeMass = hingeMass.* obj.k_hinge + M_fair;
     end
     obj.Masses.HingeMass = hingeMass*2;
     SAH_mass = baff.Mass(hingeMass,"eta",1,"Name",strcat("SAH_mass",Tag));
@@ -323,6 +324,38 @@ eng_mass = baff.Mass(obj.Masses.Engine/2,"eta",0.4,"Name",string(['engine_mass',
 pylon_mass = baff.Mass(obj.Masses.EnginePylon/2,"eta",0.8,"Name",string(['engine_installation_mass',Tag]));
 engine.add(eng_mass);
 engine.add(pylon_mass);
+
+%% ADDED - SJ: adding flutter control masses
+
+if obj.inclFlutterMass
+
+    %VALENTINE'S FUNCTION GOES HERE...please follow the output format :)
+    [masses, eta, massId, isInnerWing] = obj.flutterMassInterpolation;
+
+    %update innerwing_____________________________________________________
+
+    %find offsets....
+    eta_data = [Wing.AeroStations.Eta];
+    LE_ofst_data = [Wing.AeroStations.Chord].*[Wing.AeroStations.BeamLoc];
+    LE_ofst = interp1(eta_data(:), LE_ofst_data(:), eta(isInnerWing)); %le positions at requested
+
+    wingMasses = util.MassFromArray(masses(isInnerWing), eta(isInnerWing),LE_ofst,{massId{isInnerWing}});
+    Wing.add(wingMasses);
+
+    % Wing = obj.addMass(Wing, masses(isInnerWing), eta(isInnerWing),...
+    %     LE_ofst, {massId{isInnerWing}});
+
+    %update floating wing__________________________________________________
+    if HasFoldingWingtip
+        %find offsets....
+        eta_data = [FFWT.AeroStations.Eta];
+        LE_ofst_data = [FFWT.AeroStations.Chord].*[FFWT.AeroStations.BeamLoc];
+        LE_ofst = interp1(eta_data(:), LE_ofst_data(:), eta(~isInnerWing)); %le positions at requested
+        wingMasses = util.MassFromArray(masses(~isInnerWing), eta(~isInnerWing),0*LE_ofst, {massId{~isInnerWing}});
+        FFWT.add(wingMasses);
+    end
+
+end
 
 % add main landing gear
 l_offset = 0.15;

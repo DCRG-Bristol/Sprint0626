@@ -1,7 +1,11 @@
 classdef TAW < cast.ADP & cast.size.BaffSizing
     %TAW Summary of this class goes here
     %   Detailed explanation goes here
-    
+
+    properties %SJ added: switch to control flutter masses...
+        inclFlutterMass = true;
+    end
+
     properties
         Masses = struct();
         Dihedral = 5;
@@ -86,6 +90,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         VTPArea = 22.17
         HTP_TCR_root = 0.15;
         SizeEmpenage = true;
+        EnableFairingStiffness = true;
     end
     %landing gear
     properties

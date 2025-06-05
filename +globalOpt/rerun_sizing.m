@@ -1,4 +1,4 @@
-load('example_data\A220_simple_rerun.mat')
+load('example_data\A220_simple.mat')
 
 % ========================= Set Hyper-parameters =========================
 load("+globalOpt\Trainingset_500.mat")
