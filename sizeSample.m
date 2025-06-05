@@ -81,7 +81,7 @@ if printoutput
     
     fh.printing.title('','Length',60,'Symbol','=')
     fh.printing.title(sprintf('Trip Fuel: %.3f t',Fuel_trip./1e3),'Length',60,'Symbol','=')
-    fh.printing.title(sprintf('Block Fuel: %.3f t',block_trip./1e3),'Length',60,'Symbol','=')
+    fh.printing.title(sprintf('Block Fuel: %.3f t',block_fuel./1e3),'Length',60,'Symbol','=')
     fh.printing.title(sprintf('MTOM: %.2f t',ADP.MTOM),'Length',60,'Symbol','=')
 
     %% ======================== Get Operating Cost  ===========================
@@ -89,5 +89,5 @@ if printoutput
     fh.printing.title(sprintf('Operating Cost: %d USD per seat per km',C_ops),'Length',60,'Symbol','=')
     
 end
-output = [meta.Fuel_trip,C_ops,ADP.Span*ADP.HingeEta,ADP.Span];
+output = [block_fuel,C_ops,ADP.Span*ADP.HingeEta,ADP.Span];
 end
