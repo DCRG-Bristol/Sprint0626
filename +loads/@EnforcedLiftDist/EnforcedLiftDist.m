@@ -10,7 +10,8 @@ classdef EnforcedLiftDist < cast.ADP & cast.size.AbstractLoads
     properties
         gprMdl_gusts_locked_My
         gprMdl_gusts_locked_Mx
-        gprMdl_gusts_unlocked
+        gprMdl_gusts_unlocked_My
+        gprMdl_gusts_unlocked_Mx
         gprMdl_turb_locked
         gprMdl_turb_unlocked
         ranges
@@ -51,13 +52,14 @@ classdef EnforcedLiftDist < cast.ADP & cast.size.AbstractLoads
             obj.Taw = Taw;
             
             model_1 = load(fullfile(fileparts(mfilename('fullpath')),'private','GPR_gusts_locked.mat'));
-            model_2 = load(fullfile(fileparts(mfilename('fullpath')),'private','GPR_WRBM.mat'));  
+            model_2 = load(fullfile(fileparts(mfilename('fullpath')),'private','GPR_gusts_unlocked.mat'));  
             model_3 = load(fullfile(fileparts(mfilename('fullpath')),'private','GPR_turb_locked.mat')); 
             model_4 = load(fullfile(fileparts(mfilename('fullpath')),'private','GPR_turb_unlocked.mat'));  
             
             obj.gprMdl_gusts_locked_My = model_1.gprMdl_1;
             obj.gprMdl_gusts_locked_Mx = model_1.gprMdl_11;
-            obj.gprMdl_gusts_unlocked = model_2.gprMdl_2; 
+            obj.gprMdl_gusts_unlocked_My = model_2.gprMdl_2;
+            obj.gprMdl_gusts_unlocked_Mx = model_2.gprMdl_22; 
             obj.gprMdl_turb_locked = model_3.gprMdl_3;    
             obj.gprMdl_turb_unlocked = model_4.gprMdl_4;  
             
