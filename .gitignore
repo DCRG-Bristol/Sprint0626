@@ -51,3 +51,6 @@ bin
 +aero/.DS_Store
 +loads/.DS_Store
 .DS_Store
+
+!+loads/@EnforcedLiftDist/private/*.mat
+!+loads/@EnforcedLiftDist/private/*.mat

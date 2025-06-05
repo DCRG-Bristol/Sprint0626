@@ -50,7 +50,7 @@ classdef BuildBaffTest < matlab.unittest.TestCase
             %% ============================ Re-run Sizing =============================
             % conduct sizing
             SubHarmonic = [0.8,3000./cast.SI.Nmile];
-            sizeOpts = util.SizingOpts(IncludeGusts=false,...
+            sizeOpts = util.SizingOpts(IncludeGusts=true,...
                 IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
             [testCase.ADP,res_mtom,Lds,time,isError,Cases] = testCase.ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
             [~,~,trip_fuel,~] = testCase.ADP.MJperPAX(3000./cast.SI.Nmile,0.8);
