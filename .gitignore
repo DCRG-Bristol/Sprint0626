@@ -48,3 +48,6 @@ bin
 
 ################################ Exceptions ###############################
 !@TAW/private/*.mat
++aero/.DS_Store
++loads/.DS_Store
+.DS_Store
