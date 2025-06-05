@@ -34,7 +34,7 @@ t_bl = t_bl/3600;
 %% ============================ Operating Cost Calculation ================
 % fuel and oil costs
 % C_fuel and C_oil [USD per seat per km]
-C_fuel = block_fuel * fuel_price / range_mission / N_pax;
+C_fuel = block_fuel * fuel_price * 1000/ (range_mission * N_pax);
 
 % speed of sound at cruise level [m/s]
 [rho,a,~,P] = ads.util.atmos(34e3./cast.SI.ft);
@@ -43,7 +43,7 @@ TAS = a * ADP.ADR.M_c;
 
 % mission time in hours
 % t_bl = range_mission * 1000 / (TAS * 3600);
-C_oil = 0.7 * N_eng * t_bl * oil_price / range_mission / N_pax;
+C_oil = 0.7 * N_eng * t_bl * oil_price * 1000/ range_mission / N_pax;
 
 % flight crew costs
 
@@ -58,12 +58,12 @@ salary_crew = 1.0 * salary_Captain ...
 
 % Velocity in [km/hour]
 
-V_bl = range_mission / t_bl;
+V_bl = range_mission / (t_bl*1000);
 C_crew = ((1+0.26)*salary_crew/1000. + 9)/(N_pax * V_bl);
 
 % insurance & maintenance cost
 % USD 1500 per flight hour
-C_other = 1500*t_bl/3600. / (N_pax * range_mission);
+C_other = 1500*t_bl*1000. / (N_pax * range_mission);
 
 % Total operating cost (per pax per km)
 C_ops = C_fuel + C_oil + C_crew + C_other;
