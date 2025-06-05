@@ -44,6 +44,12 @@ classdef BuildBaffTest < matlab.unittest.TestCase
             testCase.verifyGreaterThan(K,0);
             testCase.verifyGreaterThan(M,0);
             testCase.verifyLessThan(M,100);
+
+            % Static Margin Check
+            testCase.ADP.StaticStabilityCorrections();
+            SM = testCase.ADP.StaticMargin;
+            testCase.verifyGreaterThan(SM,0.1);
+            testCase.verifyLessThan(SM,0.85);
         end
 
         function sizingTest(testCase)
@@ -62,12 +68,6 @@ classdef BuildBaffTest < matlab.unittest.TestCase
             [testCase.ADP,res_mtom,Lds,time,isError,Cases] = testCase.ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
             [~,~,trip_fuel,~] = testCase.ADP.MJperPAX(3000./cast.SI.Nmile,0.8);
             testCase.verifyGreaterThan(trip_fuel,0);
-
-            %% Static Margin Check
-            testCase.ADP.StaticStabilityCorrections();
-            SM = testCase.ADP.StaticMargin;
-            testCase.verifyGreaterThan(SM,0.1);
-            testCase.verifyLessThan(SM,0.85);
         end
     end
 end
