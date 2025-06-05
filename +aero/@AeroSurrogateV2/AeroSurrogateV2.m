@@ -121,7 +121,8 @@ classdef AeroSurrogateV2 < api.AbstractPolar
                 CD0 = obj.CD0_c + obj.Shevell(obj.Taw.ADR.M_c, obj.Taw.CL_cruise);
                 meta = obj.CD0_meta_c;
             else
-                [CD0,meta] = obj.interp_data_CD0(M,CL);
+                error('Not implemented');
+                % [CD0,meta] = obj.interp_data_CD0(M,CL);
             end
         end
 
@@ -132,12 +133,10 @@ classdef AeroSurrogateV2 < api.AbstractPolar
                 M
                 Phase FlightPhase = FlightPhase.Cruise;
             end
+            Cl = clip(Cl,0,0.8);
             if obj.Taw.LogCl
                 obj.Taw.CLs(end+1) = Cl;
             end
-
-
-            
             if obj.use_original
                 switch Phase
                     case FlightPhase.Cruise
