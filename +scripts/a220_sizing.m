@@ -24,6 +24,7 @@ ADP.WingBeamElements = 60;
 ADP.WingletHeight = 0;
 ADP.WingIndependentVar = "AR";
 ADP.AR = 11;
+ADP.SweepAngle = real(acosd(0.75.*ADP.Mstar./ADP.ADR.M_c));
 
 %hinge setting
 ADP.HingeEta = 1;
