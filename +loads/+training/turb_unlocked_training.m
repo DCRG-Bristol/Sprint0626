@@ -68,7 +68,7 @@ for i = 1:nSamples
         % Gust simulation
         ld = loads.NastranModel(ADP);
         lc = cast.LoadCase.Turbulence(ADP.ADR.M_c,ADP.ADR.Alt_cruise.*cast.SI.ft);
-        ld.SetConfiguration(IsLocked=true);
+        ld.SetConfiguration(IsLocked=false);
         ld.BinFolder = sprintf('Bin_test', i);
         [Lds,BinFolder] = ld.TurbLoads(lc,1);
 
@@ -118,9 +118,9 @@ X = X(caseOK, :);
 Y_mat = cell2mat(Y_WRBM(caseOK));  % nValidSamples x 50
 
 %% 4. FIT GPR MODELS FOR EACH STATION -------------------------------------
-gprMdl_3 = cell(1, 50);
+gprMdl_4 = cell(1, 50);
 for j = 1:50
-    gprMdl_3{j} = fitrgp(X, Y_mat(:,j), ...
+    gprMdl_4{j} = fitrgp(X, Y_mat(:,j), ...
         'BasisFunction',   'none', ...
         'KernelFunction',  'ardsquaredexponential', ...
         'Standardize',     true, ...
@@ -131,4 +131,4 @@ for j = 1:50
 end
 
 % Save all models
-save('GPR_turb_locked.mat', 'gprMdl_3', 'paramNames', 'ranges');
+save('GPR_turb_unlocked.mat', 'gprMdl_4', 'paramNames', 'ranges');
