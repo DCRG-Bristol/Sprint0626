@@ -13,7 +13,9 @@ source = load(fullfile(fileparts(mfilename('fullpath')),'private','SM_x_data.mat
 
 input = source.data_all(:,1:3); 
 output = source.data_all(:,4);
-
+output = reshape(output, [], 1);
+[input,idx] = unique(input,'rows');
+output = output(idx);
 x_interp = scatteredInterpolant(input, reshape(output, [], 1));
 
 obj.StaticMargin = x_interp(ar,sa, he);
