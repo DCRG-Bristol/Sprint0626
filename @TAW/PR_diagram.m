@@ -31,19 +31,19 @@ M_f_A = M_f;
 
 % get point C (Max. fuel + payload upto MTOM)
 M_TO_C = min(obj.OEM+FuelCapacity,MTOM);
-M_f = M_TO_C-obj.OEM;
+M_f_C = M_TO_C-obj.OEM;
 M_P_C = 0;
-C_r = fzero(@(x)fuelMass(x,obj,M_TO_C)-M_f,[A_r,A_r*10]);
+C_r = fzero(@(x)fuelMass(x,obj,M_TO_C)-M_f_C,[A_r,A_r*10]);
 
 % get point B (Max. fuel + payload upto MTOM)
 M_TO_B = MTOM;
-if M_f_A>=(FuelCapacity-10)
+if M_f_A>=(FuelCapacity-10) || MTOM-M_f_C-obj.OEM  == 0
     M_P_B = M_P_A;
     B_r = A_r;
 else
-    M_f = FuelCapacity;
-    M_P_B = MTOM-FuelCapacity-obj.OEM;
-    B_r = fzero(@(x)fuelMass(x,obj,M_TO_B)-M_f,[A_r,C_r]);
+    % M_f = M_f_C;
+    M_P_B = MTOM-M_f_C-obj.OEM;
+    B_r = fzero(@(x)fuelMass(x,obj,M_TO_B)-M_f_C,[A_r,C_r]);
 end
 
 % tidy up 
