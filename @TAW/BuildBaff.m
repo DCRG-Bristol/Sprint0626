@@ -201,6 +201,9 @@ while idx==0 || (abs((1-eta_te)*fuselage.EtaLength) - 2.15)^2 >0.05
     else
         obj.V_VT = obj.VTPArea*(fuselage.EtaLength*(etaVTP-obj.AftEta))/(obj.WingArea*obj.Span);
     end
+    if obj.VTPArea>obj.WingArea/3
+        obj.VTPArea = obj.WingArea/3; % Ensure VTP area does not exceed one-third of wing area
+    end
     b_VT = sqrt(AR*obj.VTPArea*2)/2;
     c_r = obj.VTPArea/(b_VT*(1+tr)/2);
     eta_te = etaVTP + c_r*0.75/fuselage.EtaLength;
