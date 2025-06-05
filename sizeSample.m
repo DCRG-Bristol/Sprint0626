@@ -17,7 +17,7 @@ ADP.SweepAngle = input(5);
 % conduct sizing
 ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
-sizeOpts = util.SizingOpts(IncludeGusts=false,...
+sizeOpts = util.SizingOpts(IncludeGusts=true,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
 % get data during cruise

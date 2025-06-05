@@ -38,16 +38,16 @@ for i = 1:length(nSamplesvec)
 
         outArray = zeros(nSamples,4);
         tic
-        for i = 1:nSamples
+        for k = 1:nSamples
         % parfor i = 1:nSamples
         % % sampleOut = sizeSample(inputUnscaled(i,:),saveMat,printoutput);
             try
                 sampleOut = sizeSample(inputUnscaled(i,:),saveMat,printoutput);
-                outArray(i,:) = sampleOut;
+                outArray(k,:) = sampleOut;
             catch ME
                 % Store error message and identifier
-                errors{i} = struct('index', i, 'message', ME.message, 'identifier', ME.identifier);
-                fprintf('Error in sample %d: %s\n', i, ME.message);
+                errors{k} = struct('index', k, 'message', ME.message, 'identifier', ME.identifier);
+                fprintf('Error in sample %d: %s\n', k, ME.message);
 
             end
         end
