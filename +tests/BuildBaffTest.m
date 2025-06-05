@@ -50,6 +50,13 @@ classdef BuildBaffTest < matlab.unittest.TestCase
             SM = testCase.ADP.StaticMargin;
             testCase.verifyGreaterThan(SM,0.1);
             testCase.verifyLessThan(SM,0.85);
+
+            % flutter mass test
+            masses = testCase.ADP.flutterMassInterpolation();
+            testCase.verifyTrue(~any(isnan(masses)));
+            testCase.verifyTrue(all(masses>=0));
+            testCase.verifyTrue(numel(masses)==7);
+            testCase.verifyTrue(sum(masses)<2e3);
         end
 
         function sizingTest(testCase)
