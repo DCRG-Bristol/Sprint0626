@@ -4,15 +4,15 @@ load('example_data\A220_simple.mat')
 load("+globalOpt\Trainingset_500.mat")
 idx = find(TrainingSet(:,end)==0)';
 ads.util.printing.title(sprintf('%.0f Errors',length(idx)))
-idx = idx(1);
+ii = idx(5);
 % idx =2;
-disp(TrainingSet(idx,:))
+disp(TrainingSet(ii,:))
 
-ADP.AR = TrainingSet(idx,1);
-ADP.HingeEta = TrainingSet(idx,2);
-ADP.FlareAngle = TrainingSet(idx,3);
-ADP.ADR.M_c = TrainingSet(idx,4);
-ADP.SweepAngle = TrainingSet(idx,5); % if empty will link to mach number...
+ADP.AR = TrainingSet(ii,1);
+ADP.HingeEta = TrainingSet(ii,2);
+ADP.FlareAngle = TrainingSet(ii,3);
+ADP.ADR.M_c = TrainingSet(ii,4);
+ADP.SweepAngle = TrainingSet(ii,5); % if empty will link to mach number...
 ADP.ConstraintAnalysis();
 ADP.BuildBaff("Retracted",false);
 
@@ -25,11 +25,11 @@ SubHarmonic = [0.8,3000./cast.SI.Nmile];
 sizeOpts = util.SizingOpts(IncludeGusts=false,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
-% get data during cruise
-fh.printing.title('Get Cruise Loads','Length',60)
-[~,Lds_c]=ADP.StructuralSizing(...
-    LoadCaseFactory.GetCases(ADP,sizeOpts,"Cruise"),sizeOpts);
-Lds = Lds | Lds_c;
+% % get data during cruise
+% fh.printing.title('Get Cruise Loads','Length',60)
+% [~,Lds_c]=ADP.StructuralSizing(...
+%     LoadCaseFactory.GetCases(ADP,sizeOpts,"Cruise"),sizeOpts);
+% Lds = Lds | Lds_c;
 %save data
 res = util.ADP2SizeMeta(ADP,'GFWT','Mano',1.5,Lds,time,isError,Cases);
 
