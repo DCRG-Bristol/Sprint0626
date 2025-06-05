@@ -53,3 +53,4 @@ bin
 .DS_Store
 
 !+loads/@EnforcedLiftDist/private/*.mat
+!+loads/@EnforcedLiftDist/private/*.mat
