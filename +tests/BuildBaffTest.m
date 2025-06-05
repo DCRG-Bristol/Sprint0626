@@ -33,10 +33,17 @@ classdef BuildBaffTest < matlab.unittest.TestCase
             testCase.ADP.UpdateAeroEstimates();
             testCase.verifyNotEmpty(testCase.ADP.WingArea);
 
+            %% aero checks
             cd = testCase.ADP.AeroSurrogate.Get_Cd(0.5,M,FlightPhase.Cruise);
             cd0 = testCase.ADP.AeroSurrogate.Get_Cd(0,M,FlightPhase.Cruise);
             testCase.verifyGreaterThan(cd,0);
             testCase.verifyGreaterThan(cd0,0);
+
+            % fairing check
+            [K,M]=testCase.ADP.GetHingeFairingSurrogate();
+            testCase.verifyGreaterThan(K,0);
+            testCase.verifyGreaterThan(M,0);
+            testCase.verifyLessThan(M,100);
         end
 
         function sizingTest(testCase)

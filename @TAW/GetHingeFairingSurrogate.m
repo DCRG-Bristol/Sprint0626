@@ -5,7 +5,7 @@ function [K_fair,M_fair] = GetHingeFairingSurrogate(ADP)
 % Variables (bounded to interpolation range)
 AR = min(max(ADP.AR,12),22);
 SweepAngle = min(max(ADP.SweepAngle,0),40);
-HingeEta = min(max(ADP.HingeEta,0.5),0.99);
+HingeEta = min(max(ADP.HingeEta,0.5),0.95);
 FlareAngle = min(max(ADP.FlareAngle,5),35);
 M_c = min(max(ADP.ADR.M_c,0.5),0.85);
 
