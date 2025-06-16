@@ -31,34 +31,42 @@ eta_forces = wb.Eta;
 % get spanwise etas for mesh
 MaxDeltaEta = 0.01; % defines spanwise discretisation
 eta_mesh = eta_forces(1);
-eta_force_idx = 1;
+%eta_forces
+%eta_force_idx = 1;
 for i = 1:length(eta_forces)-1
-    points = linspace(eta_forces(i),eta_forces(i+1),ceil((eta_forces(i+1)-eta_forces(i))/MaxDeltaEta));
+    points = linspace(eta_forces(i),eta_forces(i+1),ceil((eta_forces(i+1)-eta_forces(i))/MaxDeltaEta)+1);
     eta_mesh = [eta_mesh,points(2:end)];
-    eta_force_idx(end+1) = length(eta_mesh);
+    %eta_force_idx(end+1) = length(eta_mesh);
 end
 
+I=ismember(eta_mesh,eta_forces);
+
+eta_force_idx=find(I);
 % starting from bottum left going clockwise corners are ABCD
-N_spar = 3; % discretisations on spar webs
-N_skin = 4; % discretisations on skin
+N_spar = 4; % discretisations on spar webs3
+N_skin = 8; % discretisations on skin4
 N_section = (N_spar+1)*2 + (N_skin-1)*2; % nodes per section
 
 % interpolate heights and thicknesses
 hs = interp1(eta_forces,wb.Height,eta_mesh);
 Skins = interp1(eta_forces,wb.Skin.Skin_Thickness,eta_mesh);
 Spars = interp1(eta_forces,wb.SparWeb_Thickness,eta_mesh);
+caps = interp1(eta_forces,wb.SparCap_Thickness,eta_mesh);
+Spars=Spars+0.2*caps;
 ts = [repmat(Spars,N_spar,1);repmat(Skins,N_skin,1);repmat(Spars,N_spar,1);repmat(Skins,N_skin,1)];
 
+
 %% create FE points
+WingPoints = ads.fe.Point.empty;
 MeshPoints = ads.fe.Point.empty;
 for i = 1:length(eta_mesh)
     % Get Vertical Vector
-    nz = RHS_wing.GetGlobalA*[0;0;1];
+    nz = [0;0;1];
     % get ABCD
-    A = RHS_wing.GetGlobalWingPos(eta_mesh(i),wb_cEta(1)) - nz*hs(i)/2;
-    B = RHS_wing.GetGlobalWingPos(eta_mesh(i),wb_cEta(1)) + nz*hs(i)/2;
-    C = RHS_wing.GetGlobalWingPos(eta_mesh(i),wb_cEta(2)) + nz*hs(i)/2;
-    D = RHS_wing.GetGlobalWingPos(eta_mesh(i),wb_cEta(2)) - nz*hs(i)/2;
+    A = RHS_wing.GetWingPos(eta_mesh(i),wb_cEta(1)) - nz*hs(i)/2;
+    B = RHS_wing.GetWingPos(eta_mesh(i),wb_cEta(1)) + nz*hs(i)/2;
+    C = RHS_wing.GetWingPos(eta_mesh(i),wb_cEta(2)) + nz*hs(i)/2;
+    D = RHS_wing.GetWingPos(eta_mesh(i),wb_cEta(2)) - nz*hs(i)/2;
 
     idx = 1;
     % create points A->B
@@ -98,6 +106,13 @@ for i = 1:length(eta_mesh)
         idx = idx+1;
     end
 end
+%idx=1;
+for i = 1:length(eta_force_idx)
+    wingpointmid=RHS_wing.GetWingPos(eta_mesh(eta_force_idx(i)),0.25);
+    fe.Points(end+1) = ads.fe.Point(wingpointmid,InputCoordSys=CS);
+    WingPoints(i) =fe.Points(end);
+    %idx = idx+1;
+end
 
 %% build shell Elements
 for i = 1:size(MeshPoints,2)-1
@@ -111,27 +126,31 @@ for i = 1:size(MeshPoints,2)-1
     end
 end
 
+%for i = 1:length(eta_force_idx)
+    
 
-%% plot the nodes
-Xs = [fe.Points.GlobalPos];
-f = figure(1);clf;hold on
-% plot all points
-plot3(Xs(1,:),Xs(2,:),Xs(3,:),'k.')
-% higlight poitns on 'force rings'
-ps = MeshPoints(:,eta_force_idx);
-ps = ps(:);
-Xs = [ps.GlobalPos];
-plot3(Xs(1,:),Xs(2,:),Xs(3,:),'rs')
-axis equal
-for i = 1:size(MeshPoints,2)
-    ps = MeshPoints(:,i);
-    ps = ps([1:end,1]);
-    Xs = [ps.GlobalPos];
-    plot3(Xs(1,:),Xs(2,:),Xs(3,:),'k-')
-end
 
-%% plot QUAD4's
 
+% %% plot the nodes
+% Xs = [fe.Points.GlobalPos];
+% f = figure(1);clf;hold on
+% % plot all points
+% plot3(Xs(1,:),Xs(2,:),Xs(3,:),'k.')
+% % higlight poitns on 'force rings'
+% ps = MeshPoints(:,eta_force_idx);
+% ps = ps(:);
+% Xs = [ps.GlobalPos];
+% plot3(Xs(1,:),Xs(2,:),Xs(3,:),'rs')
+% axis equal
+% for i = 1:size(MeshPoints,2)
+%     ps = MeshPoints(:,i);
+%     ps = ps([1:end,1]);
+%     Xs = [ps.GlobalPos];
+%     plot3(Xs(1,:),Xs(2,:),Xs(3,:),'k-')
+% end
+% 
+% %% plot QUAD4's
+% 
 
 f = figure(11);clf;hold on
 for i = 1:length(fe.Shells)
@@ -139,6 +158,131 @@ Xs = [fe.Shells(i).G1([1:4,1]).GlobalPos];
 plot3(Xs(1,:),Xs(2,:),Xs(3,:),'k-')
 end
 axis equal
+
+
+for i = 1:length(eta_force_idx)
+
+    %for j = 1:size(MeshPoints,1)
+        %if j == size(MeshPoints,1)
+        %    ps = [MeshPoints(j,i),MeshPoints(j,i+1),MeshPoints(1,i+1),MeshPoints(1,i)]; % go around in circle (wrap around to start)
+        %else
+        pmid=WingPoints(i);
+        idx=eta_force_idx(i);
+        ps = [MeshPoints(:,idx)];% go around in circle            
+        %end
+        REFC=123456;%[1;2;3];
+        %v = [-1, ones(1,N)/N];
+        Wti = 1.0/N_section;%[-1, ones(1,N_section) / N_section]';
+        Ci = 123456;%[1;2;3];
+        fe.RigidBodyElements(end+1) = ads.fe.RigidBodyElement(pmid,REFC,Wti,Ci,ps);
+        %Fnom=[0,0,1];
+        %fe.Forces(end+1)=ads.fe.Force(Fnom,pmid)
+    %end
+end
+
+% pmids=WingPoints(:);
+% Fnom=[0,0,1];
+% fe.Forces(end+1)=ads.fe.Force(Fnom,pmids);
+
+
+
+ps_1 = [MeshPoints(:,1)];
+
+for i = 1:length(ps_1)
+    ps_con_i=ps_1(i);
+    fe.Constraints(end+1)=ads.fe.Constraint(ps_con_i,123456);
+end
+%ps_con=MeshPoints(:,1);
+
+%fe.Constraints(end+1)=ads.fe.Constraint(ps_con,123456);
+% 
+halfchord=ADP.MainWingRHS.GetMGC(0);
+[rho,a,~,P] = ads.util.atmos(ADP.ADR.Alt_cruise);
+TAS = a*ADP.ADR.M_c;
+
+
+%for i=
+%omega=w*halfchord/TAS;
+
+L=2500/3.2808;
+
+%phi(end+1)=(L/pi())*((1+(8/3)*((1.339*omega*L)^2))/((1+((1.339*omega*L)^2))^(11/6)));
+Nbase = 100;
+w_base = linspace(0.1, 50, Nbase);
+
+% --- 2) Ten extra points between 0.1 and 1 Hz ---
+w_extra = linspace(0.1, 1, 10);
+
+% --- 3) Combine, sort, and remove duplicates ---
+w = unique([w_base, w_extra]);
+% --- 2) Convert to angular freq (rad/s) and form nondimensional k ---
+omega = 2*pi * w;                   
+k     = (omega * halfchord) / TAS;  
+
+% --- 3) Compute phi(k) (vectorized) ---
+phi = (L/pi) * ...
+      ( (1 + (8/3)*( (1.339 * k * L).^2 )) ...
+      ./ ( (1 + ( (1.339 * k * L).^2 )).^(11/6) ) );
+
+% % --- 4) Convert phi to decibels ---
+% phi_dB = 20*log10(abs(phi));
+% 
+% % --- 5) Plot phi_dB vs. w on a logarithmic x‐axis ---
+% figure;
+% semilogx(w, phi_dB, 'b-o', 'LineWidth', 1.2, 'MarkerSize', 4);
+% grid on;
+% xlabel('Frequency w (Hz)');
+% ylabel('\phi (dB)');
+% title('Plot of \phi (dB) vs. Frequency (logarithmic Hz)');
+% 
+% figure;
+% plot(w, phi_dB, 'b-o', 'LineWidth', 1.2, 'MarkerSize', 4);
+% grid on;
+% 
+% xlabel('Frequency w (Hz)');
+% ylabel('\phi (dB)');
+% title('Plot of \phi (dB) vs. Frequency (Hz)');
+% 
+% 
+% figure;
+% plot(w, phi, 'b-o', 'LineWidth', 1.2, 'MarkerSize', 4);
+% grid on;
+% 
+% xlabel('Frequency w (Hz)');
+% ylabel('\phi (dB)');
+% title('Plot of \phi vs. Frequency (Hz)');
+% 
+% set(gca, 'Color', 'w');  % White background for the axes
+% set(gcf, 'Color', 'w');  % White background for the figure window
+% 
+% 
+% 
+%     mni.printing.bdf.writeColumnDelimiter(fid,"short")
+%     %for i = 1:length(obj)
+% 
+% TID=1;
+% tmpCard = mni.printing.cards.TABLEM1(TID,w,phi);
+% tmpCard.writeToFile(fid);
+
+            %tmpCard = mni.printing.cards.TABLEM1(obj(i).E,obj(i).REFGRID,obj(i).REFC,obj(i).WTi,obj(i).Ci,obj(i).Gi);
+            
+
+
+
+ads.nast.gust.Writeinputgust();
+
+IDs=fe.UpdateIDs();
+fe.Export('testoutput.bdf');
+
+fid=fopen('testoutput.bdf','a+');
+
+TID=9001;
+
+mni.printing.cards.TABRND1(TID,w,phi).writeToFile(fid);%'LINEAR','LINEAR'
+fclose(fid);
+
+
+
 
 
 %% old

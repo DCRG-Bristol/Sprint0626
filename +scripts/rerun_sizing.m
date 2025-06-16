@@ -1,11 +1,12 @@
 load('example_data\A220_simple.mat')
 
 %% ========================= Set Hyper-parameters =========================
-ADP.AR = 12;
-ADP.HingeEta = 0.7;
-ADP.FlareAngle = 15;
-ADP.ADR.M_c = 0.78;
-ADP.SweepAngle = []; % if empty will link to mach number...
+ADP.AR = 13.7475;%12;
+ADP.HingeEta =0.6657; %.7;
+ADP.FlareAngle = 5.00;%15;
+ADP.ADR.M_c = 0.85;%0.78;
+ADP.SweepAngle = 38.53;%[]; % if empty will link to mach number...
+
 
 %% ============================ Re-run Sizing =============================
 % conduct sizing

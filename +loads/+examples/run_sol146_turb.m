@@ -19,7 +19,7 @@ ld.SetConfiguration(IsLocked=true);
 %% plot gust loads
 % h5 = mni.result.hdf5(fullfile(BinFolder,'bin','sol146.h5'));
 % get time series from gusts from wing root element
-[Lds,f,S] = ld.ExtractTurbLoadsPSD(fullfile(BinFolder,'bin','sol146.h5'),ld.Tags(2),1);
+[Lds,f,S] = ld.ExtractTurbLoadsPSD(fullfile(BinFolder,'bin','sol146.h5'),ld.Tags(2),10);%change this number, was 1
 
 figObj = fh.pubFig(Num=5,Size=[8,7],Layout=[1,1]);
 plot(f,S)
@@ -27,3 +27,5 @@ ax = gca;
 ax.YScale = "log";
 ylabel('PSD?')
 xlabel('Freq?')
+
+
