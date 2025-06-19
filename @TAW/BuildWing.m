@@ -331,6 +331,7 @@ if obj.inclFlutterMass
 
     %VALENTINE'S FUNCTION GOES HERE...please follow the output format :)
     [masses, eta, massId, isInnerWing] = obj.flutterMassInterpolation;
+    ADP.FlutterMass = sum(masses)*2;
 
     %update innerwing_____________________________________________________
 

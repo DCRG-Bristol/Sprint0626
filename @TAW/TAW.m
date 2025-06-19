@@ -4,6 +4,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
 
     properties %SJ added: switch to control flutter masses...
         inclFlutterMass = true;
+        FlutterMass = 0;
     end
 
     properties
