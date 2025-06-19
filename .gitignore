@@ -47,12 +47,13 @@ octave-workspace
 *.gif
 bin
 
+################################### Mac ###################################
+.DS_Store/
+*/.DS_Store/
+
 ################################ Exceptions ###############################
 !@TAW/private/*.mat
-+aero/.DS_Store
 !+aero/@AeroSurrogateV2/private/*.mat
-+loads/.DS_Store
-.DS_Store
-
 !+loads/@EnforcedLiftDist/private/*.mat
 !+loads/@EnforcedLiftDist/private/*.mat
+!+loads/bin/*.mat
