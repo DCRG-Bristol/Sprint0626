@@ -12,6 +12,7 @@ bin_folder = 'bin_a220_ja1';
 %misson settings
 ADP = TAW();
 ADP.ADR = cast.ADR.A320(140,2500,16e3);
+ADP.ADR.M_c = 0.8;
 ADP.ADR.Alt_cruise = cruise_alt;
 ADP.ADR.Range_alternate = alternate_dist;
 ADP.N_seatsPerRow = 5;
@@ -24,7 +25,7 @@ ADP.WingBeamElements = 60;
 ADP.WingletHeight = 0;
 ADP.WingIndependentVar = "AR";
 ADP.AR = 11;
-ADP.SweepAngle = real(acosd(0.75.*ADP.Mstar./ADP.ADR.M_c));
+ADP.IsSweepDependent = true;
 
 %hinge setting
 ADP.HingeEta = 1;
@@ -88,8 +89,7 @@ fh.printing.title('','Length',60,'Symbol','=')
 fh.printing.title(sprintf('Trip Fuel: %.3f t',meta.Fuel_trip./1e3),'Length',60,'Symbol','=')
 fh.printing.title(sprintf('MTOM: %.2f t',ADP.MTOM),'Length',60,'Symbol','=')
 
-f = figure(1);clf;
+f = fh.pubFig("Size",[14,14]);clf;
 ADP.BuildBaff(Retracted=false);
-ADP.Baff.draw(f);
+ADP.Baff.draw(f,"Type","mesh");
 axis equal
-

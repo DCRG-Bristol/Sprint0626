@@ -3,7 +3,7 @@ function [e,Q,P,KeM] = NitaNastranOswald(obj,Mach)
 % to estimate oswald efficency factor of a Baff Aircraft
 fus = obj.Taw.Baff.BluffBody(1);
 %viscous corrections (Eq. 40 and Eq. 39b)
-KeF = 1-2*(max([fus.Stations.Radius])*2/fus.EtaLength)^2; % fuselage factor (Eq. 40)
+KeF = 1-2*(max(fus.Stations.Radius)*2/fus.EtaLength)^2; % fuselage factor (Eq. 40)
 ae = -0.001521;
 be = 10.82;
 KeM = ads.util.tern(Mach<=0.3,1,ae*(Mach/0.3-1)^be+1); % Compressibility factor (Eq. 41)

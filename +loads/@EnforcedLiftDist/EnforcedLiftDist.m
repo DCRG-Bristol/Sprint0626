@@ -47,8 +47,15 @@ classdef EnforcedLiftDist < cast.ADP & cast.size.AbstractLoads
             end
             obj.Taw = Taw;
             
-            model_1 = load(fullfile(fileparts(mfilename('fullpath')),'private','GPR_WRBM_1.mat'));
-            model_2 = load(fullfile(fileparts(mfilename('fullpath')),'private','GPR_WRBM.mat'));     
+            persistent model_1 model_2
+            
+            % Load models only if not already loaded
+            if isempty(model_1)
+                model_1 = load(fullfile(fileparts(mfilename('fullpath')),'private','GPR_WRBM_1.mat'));
+            end
+            if isempty(model_2)
+                model_2 = load(fullfile(fileparts(mfilename('fullpath')),'private','GPR_WRBM.mat'));
+            end
             
             obj.gprMdl_locked = model_1.gprMdl_1;    
             obj.gprMdl_unlocked = model_2.gprMdl_2;  

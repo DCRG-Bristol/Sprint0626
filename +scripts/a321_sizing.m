@@ -36,6 +36,7 @@ ADP.WingArea = 122.4;
 ADP.isWingAreaFixed = false;
 ADP.ldg_scale_factor = 0.85;
 ADP.HTP_TCR_root = 0.15;
+ADP.IsSweepDependent = true;
 
 
 ADP.ThrustToWeightRatio = 0.31;

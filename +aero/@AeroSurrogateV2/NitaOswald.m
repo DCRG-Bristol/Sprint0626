@@ -3,7 +3,7 @@ function [e,Q,P,KeM] = NitaOswald(obj,Mach)
 % to estimate oswald efficency factor of a Baff Aircraft
 fus = obj.Baff.BluffBody(1);
 
-taperRatio = obj.MainWingRHS(end).AeroStations(end).Chord/obj.MainWingRHS(1).AeroStations(1).Chord;
+taperRatio = obj.MainWingRHS(end).AeroStations.Chord(end)/obj.MainWingRHS(1).AeroStations.Chord(1);
 % get sweep quarter chord
 sweep = real(acosd(0.75.*obj.Mstar./obj.ADR.M_c));
 

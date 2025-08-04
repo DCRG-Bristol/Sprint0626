@@ -67,11 +67,9 @@ for i = 1:length(obj.WingBoxParams)
         tmp_wing = obj.Baff.Wing(obj.WingBoxParams(i).Index(j));
         % assign cross-section properties
         I_tmp = permute([Iyy + Izz;Iyy;Izz],[1,3,2]).*eye(3);
-        for k = 1:length(tmp_wing.Stations)
-            tmp_wing.Stations(k).A = Area.cross_section(k);
-            tmp_wing.Stations(k).I = I_tmp(:,:,k);
-            tmp_wing.Stations(k).J = J(k);
-        end
+        tmp_wing.Stations.A = Area.cross_section;
+        tmp_wing.Stations.I = I_tmp;
+        tmp_wing.Stations.J = J;
         % assign Additional masses
         idx = find(contains([tmp_wing.Children.Name],string(['ribs_',num2str(j),'_'])));
         

@@ -8,7 +8,11 @@ M_c_req = obj.ADR.M_c;
 sweep_req = obj.SweepAngle;
 
 %saved data......
-Dat = open('flutterMasses.mat');
+
+persistent Dat
+if isempty(Dat)
+    Dat = open('flutterMasses.mat');
+end
 data = Dat.data;
 masses_data = data.masses;
 
@@ -21,7 +25,7 @@ isInnerWing = data.isInnerWing;
 
 %the below are data for interpolation....
 HP_data = data.HPs; %values 
-HP_id = data.HP_id; %this should clarify what's in HP_data
+% HP_id = data.HP_id; %this should clarify what's in HP_data
 
 %for now pass some zero masses... 
 masses = zeros(length(eta),1);

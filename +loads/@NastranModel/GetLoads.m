@@ -17,9 +17,9 @@ if obj.UpdateJigTwist
     Cases = [tmpCase;Cases];
 end
 for i = 1:length(Cases)
-    if ~obj.Silent
+    % if ~obj.Silent
         ads.util.printing.title(sprintf('Running Case %s',Cases(i).Name),Length=60,Symbol='+');
-    end
+    % end
     cellArgs = namedargs2cell(Cases(i).ConfigParams);
     obj.SetConfiguration(cellArgs{:});
     if ~ismethod(obj,Cases(i).Type)
