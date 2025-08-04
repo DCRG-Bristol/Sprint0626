@@ -4,6 +4,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
 
     properties %SJ added: switch to control flutter masses...
         inclFlutterMass = true;
+        FlutterMass = 0;
     end
 
     properties
@@ -40,6 +41,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         isWingAreaFixed = false;
 
         WingIndependentVar string {ismember(WingIndependentVar,{'AR','Span'})} = "Span";
+        
 
         BallastMass = 0;
 
@@ -59,8 +61,9 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
 
     properties % wing sweep control
         Mstar = 0.935;  % to calc wing sweep angle realtive to Cruise Mach Number
-        SweepAngle = nan; % if not nan overrides MStar calc
-        ForwardSwept = false; %if SweepAngle=nan then this defines if a forward or backward swept wing is generated
+        IsSweepDependent logical = false; % if true Sweep is dependent on cruise MAshNumber
+        IsForwardSwept = false; %if IsSweepDependent=true then this defines if a forward or backward swept wing is generated
+        SweepAngle = 0; % value if sweep is independent
         NoKink = false;
     end
 
@@ -220,7 +223,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
             meta.Span = obj.Span;
             meta.AspectRatio = obj.AR;
             meta.Length = obj.Baff.BluffBody(1).EtaLength;
-            meta.FuselageRadius = max(arrayfun(@(x)x.Radius,[obj.Baff.BluffBody(1).Stations]));
+            meta.FuselageRadius = max(obj.Baff.BluffBody(1).Stations.Radius);
             meta.Thrust = obj.Thrust;
             meta.SpecificEnergy = obj.FuelType.SpecificEnergy;
             meta.CostPerKilo = obj.FuelType.CostPerKilo;

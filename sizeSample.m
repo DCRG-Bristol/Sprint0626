@@ -17,7 +17,7 @@ ADP.SweepAngle = input(5);
 % conduct sizing
 ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
-sizeOpts = util.SizingOpts(IncludeGusts=false,...
+sizeOpts = util.SizingOpts(IncludeGusts=true,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
 % get data during cruise
@@ -89,5 +89,14 @@ if printoutput
     fh.printing.title(sprintf('Operating Cost: %d USD per seat per km',C_ops),'Length',60,'Symbol','=')
     
 end
-output = [block_fuel,C_ops,ADP.Span*ADP.HingeEta,ADP.Span];
+%% collate outputs
+% cruise condition
+M_c = input(4);
+[rho,a] = ads.util.atmos(ADP.ADR.Alt_cruise);
+Cl_cruise = ADP.MTOM*ADP.Mf_TOC*9.81/(0.5*rho*(M_c*a)^2*ADP.WingArea);
+% estimate cd0 and cd_cruise
+cd0 = ADP.AeroSurrogate.Get_Cd(0,input(4),FlightPhase.Cruise);
+cd_cruise = ADP.AeroSurrogate.Get_Cd(Cl_cruise,input(4),FlightPhase.Cruise);
+% collate data
+output = [block_fuel,C_ops,ADP.Span*ADP.HingeEta,ADP.Span,ADP.FlutterMass,cd0,cd_cruise,ADP.MTOM];
 end

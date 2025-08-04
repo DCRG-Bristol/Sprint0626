@@ -169,9 +169,9 @@ HT_RHS.ControlSurfaces = baff.ControlSurface('ele_RHS',[0.2 1],[0.4 0.4]);
 
 HT_LHS = baff.Wing.FromLETESweep(b_HT/2,c_r,[0 1],sweep_le,sweep_te,0.25,...
     baff.Material.Stiff,"ThicknessRatio",[obj.HTP_TCR_root,tc_tip]);
-for i = 1:length(HT_LHS.Stations)
-    HT_LHS.Stations(i).EtaDir(1) = -HT_LHS.Stations(i).EtaDir(1);
-end
+HT_LHS.Stations.EtaDir(1,:) = -HT_LHS.Stations.EtaDir(1,:);
+
+
 HT_LHS.A = baff.util.rotz(90)*baff.util.rotx(180);
 HT_LHS.Eta = etaHTP;
 HT_LHS.Offset = [0;0;0];

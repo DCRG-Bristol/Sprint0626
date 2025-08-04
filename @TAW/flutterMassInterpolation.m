@@ -8,7 +8,11 @@ M_c_req = obj.ADR.M_c;
 sweep_req = obj.SweepAngle;
 
 %saved data......
-Dat = open('flutterMasses.mat');
+
+persistent Dat
+if isempty(Dat)
+    Dat = open('flutterMasses.mat');
+end
 data = Dat.data;
 masses_data = data.masses;
 
@@ -21,7 +25,7 @@ isInnerWing = data.isInnerWing;
 
 %the below are data for interpolation....
 HP_data = data.HPs; %values 
-HP_id = data.HP_id; %this should clarify what's in HP_data
+% HP_id = data.HP_id; %this should clarify what's in HP_data
 
 %for now pass some zero masses... 
 masses = zeros(length(eta),1);
@@ -31,6 +35,8 @@ active_HP = [1, 2, 5]; %i.e., AR_req, HingeEta_req, sweep_req
 % inactive_HP = [3, 4]; %i.e., FlareAngle_req, M_c_req
 candidate_HP = [AR_req, HingeEta_req, FlareAngle_req, M_c_req, sweep_req];
 
+
+SweepFactor = (cos(clip(sweep_req,0,20)/20*pi)+1)/2; % decay mass infulence from zero to 20 seg sweep.
 if anynan(candidate_HP(active_HP))
     masses = zeros(length(eta),1);
 elseif sweep_req >= 20
@@ -45,6 +51,7 @@ else
         end
     end
 end 
+masses = masses*SweepFactor;
 
 %NOTE: ONLY MASSES ARE TO BE INTERPOLATED!!!!!
 

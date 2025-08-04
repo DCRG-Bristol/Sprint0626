@@ -12,7 +12,7 @@ for i = 1:length(obj.Taw.Tags)
     t = obj.Taw.Tags{i}(1);
     w_idx = find(ismember([obj.Taw.Baff.Wing.Name],t),1);
     wings(i) = obj.Taw.Baff.Wing(w_idx);
-    Ns(i) = length(wings(i).Stations);
+    Ns(i) = wings(i).Stations.N;
 end
 % get beam line positions
 Ps = zeros(3,sum(Ns));
@@ -21,10 +21,10 @@ mPs = zeros(3,0);
 mMs = zeros(1,0);
 ii = 1;
 for i = 1:length(wings)
-    etas = [wings(i).Stations.Eta];
+    etas = wings(i).Stations.Eta;
     a_sts = wings(i).AeroStations.interpolate(etas);
     for j = 1:length(etas)
-        Ps(:,ii) = wings(i).GetGlobalWingPos(etas(j),a_sts(j).BeamLoc);
+        Ps(:,ii) = wings(i).GetGlobalWingPos(etas(j),a_sts.BeamLoc(j));
         Fs(:,ii) = wings(i).GetGlobalWingPos(etas(j),0.25);
         ii = ii + 1;
     end

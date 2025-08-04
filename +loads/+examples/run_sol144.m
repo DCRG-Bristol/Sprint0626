@@ -18,7 +18,7 @@ LoadCase = cast.LoadCase.Manoeuvre(M,Alt,Load_factor,SafetyFactor=1);
 [Lds,BinFolder] = ld.StaticLoads(LoadCase,1);
 
 % plot Bending Moment
-f = figure(1);
+f = fh.pubFig(Num=1);clf;
 clf;
 grid on
 Lds.plot("My",ADP.WingBoxParams);
@@ -34,7 +34,7 @@ filename = fullfile(BinFolder,'bin','sol144.h5');
 resFile = mni.result.hdf5(filename);
 [ys,~,~,Fs,~,~,chords] = util.get_lift_dist(ld,resFile,[[ld.Taw.MainWingRHS.Name],[ld.Taw.MainWingLHS.Name]]);
 
-f = figure(10);clf;
+f = fh.pubFig(Num=10);clf;
 plot(ys,Fs);
 
 

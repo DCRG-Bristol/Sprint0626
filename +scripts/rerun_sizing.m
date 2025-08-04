@@ -11,7 +11,9 @@ ADP.SweepAngle = 10; % if empty will link to mach number...
 ADP.ConstraintAnalysis();
 ADP.BuildBaff;
 
-f = figure(1);clf;ADP.Baff.draw(f);axis equal
+f = figure(1);clf;
+ADP.Baff.draw(f);
+axis equal
 
 %% ============================ Re-run Sizing =============================
 % conduct sizing
@@ -41,3 +43,9 @@ ADP.SetConfiguration(PayloadFraction=0.8);
 fh.printing.title('','Length',60,'Symbol','=')
 fh.printing.title(sprintf('Trip Fuel: %.3f t',trip_fuel./1e3),'Length',60,'Symbol','=')
 fh.printing.title(sprintf('MTOM: %.2f t',ADP.MTOM),'Length',60,'Symbol','=')
+
+
+f = fh.pubFig("Size",[14,14]);clf;
+ADP.BuildBaff(Retracted=false);
+ADP.Baff.draw(f,"Type","mesh");
+axis equal

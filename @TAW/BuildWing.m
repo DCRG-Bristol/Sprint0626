@@ -24,15 +24,7 @@ if obj.NoKink
 end
 KinkEta = (opts.KinkPos)/(obj.Span/2);
 Cl_cruise = obj.MTOM*obj.Mf_TOC*9.81/(0.5*rho*(M_c*a)^2*obj.WingArea);
-
-if isempty(obj.SweepAngle) || isnan(obj.SweepAngle)
-    sweep_qtr = real(acosd(0.75.*obj.Mstar./M_c));
-    if obj.ForwardSwept
-        sweep_qtr = sweep_qtr*-1;
-    end
-else
-    sweep_qtr = obj.SweepAngle;
-end
+sweep_qtr = obj.SweepAngle;
 
 % get wing thickness ratios
 if obj.Size_wing
@@ -44,10 +36,9 @@ tc_tip = obj.TCR_root - 0.03;
 % calculate wing planform shape
 D_join = sqrt((D_c/2)^2-(D_c/4)^2)*2;
 tr_out = 0.35;
-tr_in = 0.61;
-S = @(x)wingArea(obj.WingArea,obj.AR,tr_out,tr_in,KinkEta,x,D_join,sweep_qtr);
+S = @(x)wingArea(obj.WingArea,obj.AR,tr_out,KinkEta,x,D_join,sweep_qtr);
 c = fminsearch(@(x)(S(x)-obj.WingArea).^2,obj.WingArea./sqrt(obj.WingArea*obj.AR)); % get root chord
-[~,cs,LE_sweeps,TE_sweeps] = wingArea(obj.WingArea,obj.AR,tr_out,tr_in,KinkEta,c,D_join,sweep_qtr); % get final parameters
+[~,cs,LE_sweeps,TE_sweeps] = wingArea(obj.WingArea,obj.AR,tr_out,KinkEta,c,D_join,sweep_qtr); % get final parameters
 
 %% calc properties of interest
 HasFoldingWingtip = ~isnan(obj.HingeEta) & obj.HingeEta<1;
@@ -84,17 +75,12 @@ deltaEta = (obj.Span/2)/20/Connector.EtaLength;
 Connector.AeroStations = Connector.AeroStations.interpolate(cast.util.AddUntillFill([Connector.AeroStations.Eta],deltaEta));
 if obj.UpdateRoot
     % apply wing twist
-    aero_eta = [Connector.AeroStations.Eta]*(etas_centre2tip(2)-etas_centre2tip(1))+etas_centre2tip(1);
-    twists = interp1(obj.InterpEtas,obj.InterpTwists,aero_eta);
-    for ti = 1:length(Connector.AeroStations)
-        Connector.AeroStations(ti).Twist = twists(ti);
-    end
+    aero_eta = Connector.AeroStations.Eta*(etas_centre2tip(2)-etas_centre2tip(1))+etas_centre2tip(1);
+    Connector.AeroStations.Twist = interp1(obj.InterpEtas,obj.InterpTwists,aero_eta);
 end
 
 if ~isRight
-    for i = 1:length(Connector.Stations)
-        Connector.Stations(i).EtaDir(1) = -Connector.Stations(i).EtaDir(1);
-    end
+    Connector.Stations.EtaDir(1,:) = -Connector.Stations.EtaDir(1,:);
 end
 
 %% fuel volume
@@ -128,11 +114,11 @@ deltaEta = (obj.Span/2)/20/Wing.EtaLength;
 
 % make cosine distribution if no wingtip
 aero_eta = linspace(0,1,max(3,round(1/deltaEta)));
-delta_eta = Wing.AeroStations(end).Eta-Wing.AeroStations(1).Eta;
+delta_eta = Wing.AeroStations.Eta(end)-Wing.AeroStations.Eta(1);
 if HasFoldingWingtip
-    aero_eta = aero_eta.*delta_eta + Wing.AeroStations(1).Eta;
+    aero_eta = aero_eta.*delta_eta + Wing.AeroStations.Eta(1);
 else
-    aero_eta = round(fliplr(cos(2*pi/4*aero_eta)),5).*delta_eta + Wing.AeroStations(1).Eta;
+    aero_eta = round(fliplr(cos(2*pi/4*aero_eta)),5).*delta_eta + Wing.AeroStations.Eta(1);
 end
 if length(aero_eta)<2
     warning('hello')
@@ -141,18 +127,13 @@ Wing.AeroStations = Wing.AeroStations.interpolate(aero_eta);
 
 % Wing.AeroStations = Wing.AeroStations.interpolate(cast.util.AddUntillFill([Wing.AeroStations.Eta],deltaEta));
 % apply wing twist
-aero_eta = [Wing.AeroStations.Eta]*(etas_centre2tip(4)-etas_centre2tip(2))+etas_centre2tip(2);
-twists = interp1(obj.InterpEtas,obj.InterpTwists,aero_eta);
-for ti = 1:length(Wing.AeroStations)
-    Wing.AeroStations(ti).Twist = twists(ti);
-end
+aero_eta = Wing.AeroStations.Eta*(etas_centre2tip(4)-etas_centre2tip(2))+etas_centre2tip(2);
+Wing.AeroStations.Twist = interp1(obj.InterpEtas,obj.InterpTwists,aero_eta);
 
 %convert to draggable item
 Wing = cast.drag.DraggableWing(Wing);
 if ~isRight
-    for i = 1:length(Wing.Stations)
-        Wing.Stations(i).EtaDir(1) = -Wing.Stations(i).EtaDir(1);
-    end
+    Wing.Stations.EtaDir(1,:) = -Wing.Stations.EtaDir(1,:);
 end
 Connector.add(Wing);
 
@@ -194,7 +175,6 @@ if HasFoldingWingtip
     inner_length = sum(seg_lengths(idx_ele));
     FFWT = baff.Wing.FromLETESweep(inner_length,cs(idx_ele),inner_etas,LE_sweeps(idx_ele),TE_sweeps(idx_ele),0.4,...
         wingMat,ThicknessRatio=tr(idx_node),Dihedral=-obj.Dihedral*ones(1,nnz(idx_ele)));
-    FFWT.Eta = 1;
     FFWT.Name = string(['FFWT',Tag]);
     % create enough beam stations
     ffwt_etas = (etas(etas<=etas_centre2tip(5) & etas>=etas_centre2tip(4))-etas_centre2tip(4))/(etas_centre2tip(5)-etas_centre2tip(4));
@@ -204,33 +184,23 @@ if HasFoldingWingtip
 
     % make cosine distribution
     aero_eta = linspace(0,1,max(3,round(1/deltaEta)));
-    delta_eta = FFWT.AeroStations(end).Eta-FFWT.AeroStations(1).Eta;
+    delta_eta = FFWT.AeroStations.Eta(end)-FFWT.AeroStations.Eta(1);
     % aero_eta = aero_eta.*delta_eta + FFWT.AeroStations(1).Eta;
-    aero_eta = fliplr(round(cos(2*pi/4*aero_eta),5).*delta_eta + FFWT.AeroStations(1).Eta);
+    aero_eta = fliplr(round(cos(2*pi/4*aero_eta),5).*delta_eta + FFWT.AeroStations.Eta(1));
     if length(aero_eta)<2
         warning('hello')
     end
     FFWT.AeroStations = FFWT.AeroStations.interpolate(aero_eta);
 
-    % aero_eta = linspace(0,1,round(1/deltaEta));
-    % FFWT.AeroStations = FFWT.AeroStations.interpolate(cos(2*pi/4*aero_eta));
-
-    % FFWT.AeroStations = FFWT.AeroStations.interpolate(cast.util.AddUntillFill([FFWT.AeroStations.Eta],deltaEta));
-    
     % apply wing twist
-    aero_eta = [FFWT.AeroStations.Eta]*(etas_centre2tip(5)-etas_centre2tip(4))+etas_centre2tip(4);
-    twists = interp1(obj.InterpEtas,obj.InterpTwists,aero_eta);
-    for ti = 1:length(FFWT.AeroStations)
-        FFWT.AeroStations(ti).Twist = twists(ti);
-    end
+    aero_eta = FFWT.AeroStations.Eta*(etas_centre2tip(5)-etas_centre2tip(4))+etas_centre2tip(4);
+    FFWT.AeroStations.Twist = interp1(obj.InterpEtas,obj.InterpTwists,aero_eta);
 
     %convert to draggable item
     FFWT = cast.drag.DraggableWing(FFWT);
     if ~isRight
         FFWT.A = ads.util.roty(obj.Dihedral(end));
-        for i = 1:length(FFWT.Stations)
-            FFWT.Stations(i).EtaDir(1) = -FFWT.Stations(i).EtaDir(1);
-        end
+        FFWT.Stations.EtaDir(1,:) = -FFWT.Stations.EtaDir(1,:);
     else
         FFWT.A = ads.util.roty(-obj.Dihedral(end));
     end
@@ -260,8 +230,8 @@ if obj.WingletHeight>0
         tmp_wing = Wing;
     end
     h = obj.WingletHeight;
-    cr = tmp_wing.AeroStations(end).Chord;
-    taper = tmp_wing.AeroStations(end).Chord/tmp_wing.AeroStations(1).Chord;
+    cr = tmp_wing.AeroStations.Chord(end);
+    taper = tmp_wing.AeroStations.Chord(end)/tmp_wing.AeroStations.Chord(1);
     LE_sweep = LE_sweeps(end);
     c_bar = tand(LE_sweep)*h+cr*taper-cr;
     te_sweep = sign(c_bar)*atand(abs(c_bar)/h);
@@ -331,25 +301,23 @@ if obj.inclFlutterMass
 
     %VALENTINE'S FUNCTION GOES HERE...please follow the output format :)
     [masses, eta, massId, isInnerWing] = obj.flutterMassInterpolation;
+    ADP.FlutterMass = sum(masses)*2;
 
     %update innerwing_____________________________________________________
 
     %find offsets....
-    eta_data = [Wing.AeroStations.Eta];
-    LE_ofst_data = [Wing.AeroStations.Chord].*[Wing.AeroStations.BeamLoc];
+    eta_data = Wing.AeroStations.Eta;
+    LE_ofst_data = Wing.AeroStations.Chord.*Wing.AeroStations.BeamLoc;
     LE_ofst = interp1(eta_data(:), LE_ofst_data(:), eta(isInnerWing)); %le positions at requested
 
     wingMasses = util.MassFromArray(masses(isInnerWing), eta(isInnerWing),LE_ofst,{massId{isInnerWing}});
     Wing.add(wingMasses);
 
-    % Wing = obj.addMass(Wing, masses(isInnerWing), eta(isInnerWing),...
-    %     LE_ofst, {massId{isInnerWing}});
-
     %update floating wing__________________________________________________
     if HasFoldingWingtip
         %find offsets....
-        eta_data = [FFWT.AeroStations.Eta];
-        LE_ofst_data = [FFWT.AeroStations.Chord].*[FFWT.AeroStations.BeamLoc];
+        eta_data = FFWT.AeroStations.Eta;
+        LE_ofst_data = FFWT.AeroStations.Chord.*FFWT.AeroStations.BeamLoc;
         LE_ofst = interp1(eta_data(:), LE_ofst_data(:), eta(~isInnerWing)); %le positions at requested
         wingMasses = util.MassFromArray(masses(~isInnerWing), eta(~isInnerWing),0*LE_ofst, {massId{~isInnerWing}});
         FFWT.add(wingMasses);
@@ -394,21 +362,25 @@ FuelMassTotal = ConFuelMassTotal + WingFuelMassTotal;
 end
 
 
-function [S,cs,le_sweep,te_sweep] = wingArea(S,AR,lambda1,lambda2,k,c,D_f,LambdaQtr)
+function [S,cs,le_sweep,te_sweep] = wingArea(S,AR,lambda1,k,c,D_f,LambdaQtr)
 b = sqrt(AR*S)/2;
 R_f = D_f/2;
-c_t = lambda1*c;
-c_r = c/lambda2;
 
-A_1 = c_r*R_f;
 L2 = k*b-R_f;
-A_2 = (c_r+c)/2*L2;
 L3 =  b*(1-k);
+
+c_t = lambda1*c;
+c_r = (c-c_t)/L3*L2+c;
+
+% Initial calculation with constant rate of chord change and straight LE
+A_1 = c_r*R_f;
+A_2 = (c_r+c)/2*L2;
 A_3 = (c+c_t)/2*L3;
 S = 2*(A_1+A_2+A_3);
 
 cs = [c_r,c_r,c,c_t];
 
+% Create straight leading edge based on quarter chord sweep
 x_qtr = [0 0 tand(LambdaQtr)*L2 tand(LambdaQtr)*(L2+L3)];
 x_le = -cs.*0.25 + x_qtr;
 x_te = cs.*0.75 + x_qtr;
@@ -416,9 +388,25 @@ x_te = cs.*0.75 + x_qtr;
 le_sweep = atand((x_le(2:end)-x_le(1:end-1))./[R_f L2 L3]);
 te_sweep = atand((x_te(2:end)-x_te(1:end-1))./[R_f L2 L3]);
 
-% correct to ensure straight LE
-le_sweep = [0 1 1].* le_sweep(end);
-te_sweep(2) = atand((-c_r + tand(le_sweep(2))*L2 + c)/L2);
+% Check if inboard TE sweep is negative and create classic aircraft kink
+if te_sweep(2) > 0    
+    % Recalculate root chord to maintain straight LE and zero TE sweep inboard
+    new_c_r = c + tand(le_sweep(2))*L2;
+    
+    % Update chord array and recalculate areas
+    cs([1,2]) = new_c_r;
+
+    % Create straight leading edge based on quarter chord sweep
+
+    x_te = x_le + cs;
+
+    le_sweep = atand((x_le(2:end)-x_le(1:end-1))./[R_f L2 L3]);
+    te_sweep = atand((x_te(2:end)-x_te(1:end-1))./[R_f L2 L3]);
+
+    A_1 = c_r*R_f;
+    A_2 = (c_r+c)/2*L2;
+    S = 2*(A_1+A_2+A_3);
+end
 end
 
 

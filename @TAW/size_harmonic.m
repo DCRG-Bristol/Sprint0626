@@ -4,7 +4,8 @@ arguments
     opts util.SizingOpts = util.SizingOpts;
 end
 res = struct();
-for i = 1:100
+warningFlag = false;
+for i = 1:50
     old = obj.MTOM;
     obj.ConstraintAnalysis();
     obj.BuildBaff(Retracted=false);
@@ -22,11 +23,24 @@ for i = 1:100
             ads.util.printing.title(sprintf('Harmonic Loop completed on iter %.0f: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol=' ');
         end
         return
-    end
+    elseif i>1 && abs(res(i).Y) > abs(res(i-1).Y)
+        % not converging
+        if warningFlag
+            if opts.Verbose
+                ads.util.printing.title(sprintf('No Harmonic Convergence Continuing Anyway: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol='E');
+            end
+            return
+        else
+            warningFlag = true;
+        end
+    elseif i>4 && abs(delta)<500 && abs(res(i-1).Y)<1e3
+        % switch to gradient decent if getting close
+        obj.MTOM = interp1([res(end-1:end).Y],[res(end-1:end).X],0,"linear","extrap");
+    end  
 end
 if opts.Verbose
     ads.util.printing.title(sprintf('No Harmonic Convergence Continuing Anyway: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol='E');
 end
-warning('No harmonic Convergence - continuing anyway')
+error('No harmonic Convergence - continuing anyway')
 end
 

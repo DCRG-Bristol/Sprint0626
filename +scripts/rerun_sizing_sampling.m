@@ -1,17 +1,16 @@
-
-
 fuel_price = 0.64995; % USD/kg
 oil_price = 30.0; % USD/kg
-range_mission = 3000./(cast.SI.Nmile*1000); % range of mission [km]
+range_mission = 3000./cast.SI.Nmile*cast.SI.km; % range of mission convert Nautical miles to km [km]
 N_pax = 140; % Number of passengers
 N_eng = 2; % Number of engines
 
 %% ========================= Set Hyper-parameters =========================
-nSamplesvec = [10 100 250 500, 1000, 2500 5000];
+nSamplesvec = [500];
 %nSamplesvec = [1 3 5];
 % type = 'test';
-types = {'training','test'};
+types = {'training'};
 for i = 1:length(nSamplesvec)
+    pw = fh.PoolWaitbar(nSamplesvec(i), 'Training Data');
     for j = 1:length(types)
         nSamples = nSamplesvec(i);
         type = types{j};
@@ -26,8 +25,8 @@ for i = 1:length(nSamplesvec)
         %     0.5 0.85;... % Cruise speed (mach)
         %     0 40]; %Qtr-Chord sweep angle
         inputs = [11 23; ... %AR
-            0.45 1; ... %Norm SAH pos
-            4.5 36;... % SAH Flare angle
+            0.45 0.95; ... %Norm SAH pos
+            10 20;... % SAH Flare angle
             0.45 0.9;... % Cruise speed (mach)
             0 45]; %Qtr-Chord sweep angle
         inScale = inputs(:,1)-inputs(:,2);
@@ -36,20 +35,21 @@ for i = 1:length(nSamplesvec)
         printoutput = false;
         saveMat = false;
 
-        outArray = zeros(nSamples,4);
+        outArray = nan(nSamples,8);
         tic
-        for i = 1:nSamples
-        % parfor i = 1:nSamples
+        % for k = 1:nSamples
+        parfor k = 1:nSamples
+        % for k = 311
         % % sampleOut = sizeSample(inputUnscaled(i,:),saveMat,printoutput);
             try
-                sampleOut = sizeSample(inputUnscaled(i,:),saveMat,printoutput);
-                outArray(i,:) = sampleOut;
+                sampleOut = sizeSample(inputUnscaled(k,:),saveMat,printoutput);
+                outArray(k,:) = sampleOut;
             catch ME
                 % Store error message and identifier
-                errors{i} = struct('index', i, 'message', ME.message, 'identifier', ME.identifier);
-                fprintf('Error in sample %d: %s\n', i, ME.message);
-
+                errors{k} = struct('index', k, 'message', ME.message, 'identifier', ME.identifier);
+                fprintf('Error in sample %d: %s\n', k, ME.message);
             end
+            pw.increment();
         end
         toc
         if strcmp(type,'test')
@@ -69,6 +69,6 @@ for i = 1:length(nSamplesvec)
             filename_csv = ['Trainingset_' num2str(nSamples) '.csv'];
             writematrix(TrainingSet, filename_csv);  % Use csvwrite if using older MATLAB
         end
-
     end
+    pw.delete();
 end

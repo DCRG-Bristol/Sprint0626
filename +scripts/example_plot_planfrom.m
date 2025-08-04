@@ -1,4 +1,14 @@
 load('example_data\A220_simple.mat')
+
+
+ADP.AR = 20;
+ADP.HingeEta = 0.6;
+ADP.FlareAngle = 15;
+ADP.ADR.M_c = 0.78;
+ADP.SweepAngle = -3; % if empty will link to mach number...
+ADP.ConstraintAnalysis();
+ADP.BuildBaff;
+
 ADP.ConstraintAnalysis();
 ADP.BuildBaff;
 
@@ -7,10 +17,10 @@ f = figure(1);clf;ADP.Baff.draw(f);axis equal
 % extract correct wing elements (could do something clever with name lookup...)
 Wings = ADP.Baff.Wing;
 
-f = figure(1);
+% test;
+f = fh.pubFig(Num=2,Size=[10,10]);
 clf;
 hold on
-
 % for each wing plot the LE and TE points at each Aerodyanmic station
 for i = 1:length(Wings)
     % get number of stations
@@ -31,5 +41,7 @@ xlabel('Y [m]')
 ylabel('X [m]')
 ax = gca;
 ax.YDir = "reverse";
-
-copygraphics(gcf);
+ax.XAxis.Visible = false;
+ax.YAxis.Visible = false;
+% f.Children
+copygraphics(f);
