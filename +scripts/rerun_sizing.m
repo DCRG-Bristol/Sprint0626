@@ -1,14 +1,20 @@
+load('example_data/UB321_simple.mat')
 
 
 %% ========================= Set Hyper-parameters =========================
 load('example_data/A220_simple.mat')
 
-ADP.AR = 22;
-ADP.HingeEta = 1;
+ADP.IsSweepDependent = true;
+% ADP.LoadsSurrogateType = "Enforced";
+ADP.LoadsSurrogateType = "Nastran";
+ADP.WingIndependentVar = "AR";
+ADP.isWingAreaFixed = false;
+
+% hyper-parameters
+ADP.AR = 18.6;
+ADP.HingeEta = 0.7;
 ADP.FlareAngle = 15;
-ADP.ADR.M_c = 0.4;
-ADP.SweepAngle = 30; % if empty will link to mach number...
-ADP.IsSweepDependent = false;
+ADP.ADR.M_c = 0.7;
 ADP.ConstraintAnalysis();
 ADP.BuildBaff;
 
@@ -20,7 +26,7 @@ axis equal
 %% ============================ Re-run Sizing =============================
 % conduct sizing
 ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
-SubHarmonic = [0.8,3000./cast.SI.Nmile];
+SubHarmonic = [16/19.28,6000./cast.SI.km];
 sizeOpts = util.SizingOpts(IncludeGusts=false,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
@@ -36,7 +42,7 @@ if ~isfolder('example_data')
     mkdir('example_data');
 end
 
-save('example_data/A220_simple_rerun.mat','ADP','Lds');
+save('example_data/A321_simple_rerun.mat','ADP','Lds');
 
 %% ======================== Get Mission Fuel Burn =========================
 ADP.LogCl = true;

@@ -11,6 +11,7 @@ bin_folder = 'bin_a320_ja1';
 
 %misson settings
 ADP = TAW();
+ADP.LoadsSurrogateType = "Enforced";
 ADP.ADR = cast.ADR.A320(235,2500,25e3);
 ADP.ADR.Alt_cruise = cruise_alt;
 ADP.ADR.Range_alternate = alternate_dist;

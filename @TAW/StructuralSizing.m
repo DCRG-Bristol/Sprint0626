@@ -13,8 +13,12 @@ if isempty(opts.BinFolder)
 end
 
 %build Surrogate
-% obj.LoadsSurrogate = loads.NastranModel(obj);
-obj.LoadsSurrogate = loads.EnforcedLiftDist(obj);
+switch obj.LoadsSurrogateType
+    case "Enforced"
+        obj.LoadsSurrogate = loads.EnforcedLiftDist(obj);
+    case "Nastran"
+        obj.LoadsSurrogate = loads.NastranModel(obj);
+end
 
 % run loops
 isError = true; 

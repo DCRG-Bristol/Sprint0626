@@ -156,10 +156,9 @@ if HasFoldingWingtip
         hinge.Rotation = 0;
         hinge.A = ads.util.roty(-obj.Dihedral(end));
     end
-    [K_fair,M_fair] = obj.GetHingeFairingSurrogate();
     hinge.isLocked = 0;
     hinge.Eta = 1;
-    hinge.K = 1e-3 + K_fair;
+    hinge.K = 1e-3;
     hinge.Name = strcat("SAH",Tag);
     Wing.add(hinge);
     %create hinge mass
@@ -167,7 +166,7 @@ if HasFoldingWingtip
         hingeMass = 0;
     else
         hingeMass = SAH_massFraction(obj.HingeEta)*obj.WingMass/2;
-        hingeMass = hingeMass.* obj.k_hinge + M_fair;
+        hingeMass = hingeMass.* obj.k_hinge;
     end
     obj.Masses.HingeMass = hingeMass*2;
     SAH_mass = baff.Mass(hingeMass,"eta",1,"Name",strcat("SAH_mass",Tag));
@@ -299,57 +298,6 @@ eng_mass = baff.Mass(obj.Masses.Engine/2,"eta",0.4,"Name",string(['engine_mass',
 pylon_mass = baff.Mass(obj.Masses.EnginePylon/2,"eta",0.8,"Name",string(['engine_installation_mass',Tag]));
 engine.add(eng_mass);
 engine.add(pylon_mass);
-
-%% ADDED - SJ: adding flutter control masses
-if obj.inclFlutterMass
-    [masses, eta, massId, isInnerWing] = obj.flutterMassInterpolation;
-    ADP.FlutterMass = sum(masses)*2;
-
-    % Update inner wing
-    eta_data = Wing.AeroStations.Eta;
-    LE_offset_data = Wing.AeroStations.Chord .* Wing.AeroStations.BeamLoc;
-    LE_offset = interp1(eta_data, LE_offset_data, eta(isInnerWing));
-    wingMasses = util.MassFromArray(masses(isInnerWing), eta(isInnerWing), LE_offset, {massId{isInnerWing}});
-    Wing.add(wingMasses);
-
-    % Update floating wing
-    if HasFoldingWingtip
-        eta_data = FFWT.AeroStations.Eta;
-        LE_offset_data = FFWT.AeroStations.Chord .* FFWT.AeroStations.BeamLoc;
-        LE_offset = interp1(eta_data, LE_offset_data, eta(~isInnerWing));
-        wingMasses = util.MassFromArray(masses(~isInnerWing), eta(~isInnerWing), 0*LE_offset, {massId{~isInnerWing}});
-        FFWT.add(wingMasses);
-    end
-end
-
-% add main landing gear
-l_offset = 0.15;
-if obj.Size_ldg    
-    z_e = abs(engine.Offset(3)) + obj.Engine.Diameter/2 + tand(5)*(obj.EnginePos - D_c*l_offset);
-
-    %VALENTINE'S FUNCTION GOES HERE...please follow the output format :)
-    [masses, eta, massId, isInnerWing] = obj.flutterMassInterpolation;
-    ADP.FlutterMass = sum(masses)*2;
-
-    %update innerwing_____________________________________________________
-
-    %find offsets....
-    eta_data = Wing.AeroStations.Eta;
-    LE_ofst_data = Wing.AeroStations.Chord.*Wing.AeroStations.BeamLoc;
-    LE_ofst = interp1(eta_data(:), LE_ofst_data(:), eta(isInnerWing)); %le positions at requested
-
-    wingMasses = util.MassFromArray(masses(isInnerWing), eta(isInnerWing),LE_ofst,{massId{isInnerWing}});
-    Wing.add(wingMasses);
-
-    %update floating wing__________________________________________________
-    if HasFoldingWingtip
-        %find offsets....
-        eta_data = FFWT.AeroStations.Eta;
-        LE_ofst_data = FFWT.AeroStations.Chord.*FFWT.AeroStations.BeamLoc;
-        LE_ofst = interp1(eta_data(:), LE_ofst_data(:), eta(~isInnerWing)); %le positions at requesd(wingMasses);
-    end
-
-end
 
 % add main landing gear
 l_offset = 0.15;
