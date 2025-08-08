@@ -80,7 +80,7 @@ if printoutput
     %% ======================== Get Mission Fuel Burn =========================
     
     fh.printing.title('','Length',60,'Symbol','=')
-    fh.printing.title(sprintf('Trip Fuel: %.3f t',Fuel_trip./1e3),'Length',60,'Symbol','=')
+    fh.printing.title(sprintf('Trip Fuel: %.3f t',trip_fuel./1e3),'Length',60,'Symbol','=')
     fh.printing.title(sprintf('Block Fuel: %.3f t',block_fuel./1e3),'Length',60,'Symbol','=')
     fh.printing.title(sprintf('MTOM: %.2f t',ADP.MTOM),'Length',60,'Symbol','=')
 

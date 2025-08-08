@@ -80,3 +80,9 @@ if ~isfolder('example_data')
 end
 save('example_data/UB321_simple.mat','ADP','Lds');
 
+
+f = figure(1);
+clf;
+ADP.Baff.draw(Type="mesh");
+axis equal
+ADP.MTOM

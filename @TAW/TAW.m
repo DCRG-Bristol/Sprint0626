@@ -65,6 +65,8 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         IsForwardSwept = false; %if IsSweepDependent=true then this defines if a forward or backward swept wing is generated
         SweepAngle = 0; % value if sweep is independent
         NoKink = false;
+        KinkPos = 5.75;
+        EnginePos = 5.5;
     end
 
     properties
@@ -333,6 +335,10 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
 
             % adjust eta
             eta = new_p_wing/wing_r.Parent.EtaLength;
+            if imag(eta)~=0
+                error('Help')
+            end
+            
             if isnan(eta)
                 error('Undefined Wing position calulated')
             end

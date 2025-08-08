@@ -1,18 +1,20 @@
-load('example_data/A220_simple.mat')
+
 
 %% ========================= Set Hyper-parameters =========================
+load('example_data/A220_simple.mat')
 
-
-ADP.AR = 18.6;
-ADP.HingeEta = 0.7;
+ADP.AR = 22;
+ADP.HingeEta = 1;
 ADP.FlareAngle = 15;
-ADP.ADR.M_c = 0.78;
-ADP.SweepAngle = 10; % if empty will link to mach number...
+ADP.ADR.M_c = 0.4;
+ADP.SweepAngle = 30; % if empty will link to mach number...
+ADP.IsSweepDependent = false;
 ADP.ConstraintAnalysis();
 ADP.BuildBaff;
 
+
 f = figure(1);clf;
-ADP.Baff.draw(f);
+ADP.Baff.draw(f,Type="mesh");
 axis equal
 
 %% ============================ Re-run Sizing =============================

@@ -114,9 +114,10 @@ mgc = obj.MainWingRHS.GetMGC(0.25);
 % etaHTP =0.87*37.57/fuselage.EtaLength;
 etaHTP = (fuselage.EtaLength-(0.13*37.57))/fuselage.EtaLength; % start ~same distance away from end of fuselage as a320
 
-sweep_qtr = real(acosd(0.75.*obj.Mstar./M_c));
+sweep_qtr = obj.SweepAngle;
 if obj.SizeEmpenage
     obj.HTP_TCR_root = cast.geom.dim.Thickness2Chord(M_c,Cl_cruise,sweep_qtr,obj.Mstar);
+    obj.HTP_TCR_root = clip(obj.HTP_TCR_root,0.1,0.2);
 end
 tc_tip = obj.HTP_TCR_root - 0.03;
 
@@ -212,7 +213,7 @@ end
 
 mgc = 2/3*c_r*(1+tr+tr^2)/(1+tr);
 y_mgc_vt = b_VT/6*(1+2*tr)/(1+tr);
-sweep_qtr = 35;
+sweep_qtr = obj.SweepAngle;
 sweep_le = atand(c_r/4*(1-tr)/(b_VT)+tand(sweep_qtr));
 sweep_te = atand(tand(sweep_qtr)+3/4*c_r*(tr-1)/b_VT);
 x_mgc_vt = y_mgc_vt*tan(sweep_le)+mgc*0.25;

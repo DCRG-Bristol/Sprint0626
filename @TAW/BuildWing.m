@@ -6,8 +6,6 @@ arguments
     opts.Mass_factor = 1;
     opts.BeamElements = 25;
     opts.Retracted = false;
-    opts.EnginePos = 5.5;
-    opts.KinkPos = 5.75;
 end
 % create tag
 if isRight
@@ -20,9 +18,9 @@ end
 M_c = obj.ADR.M_c;
 [rho,a] = ads.util.atmos(obj.ADR.Alt_cruise);
 if obj.NoKink
-    opts.KinkPos = D_c/2;
+    obj.KinkPos = D_c/2;
 end
-KinkEta = (opts.KinkPos)/(obj.Span/2);
+KinkEta = (obj.KinkPos)/(obj.Span/2);
 Cl_cruise = obj.MTOM*obj.Mf_TOC*9.81/(0.5*rho*(M_c*a)^2*obj.WingArea);
 sweep_qtr = obj.SweepAngle;
 
@@ -50,12 +48,13 @@ if HasFoldingWingtip
 else
     etas_centre2tip = [0 D_join/obj.Span KinkEta 1];                % from centre to tip (including kink)
 end
-etas = linspace(0,1,opts.BeamElements);
-for i = 1:length(etas_centre2tip)
-    etas = etas(abs(etas-etas_centre2tip(i))>(1/(opts.BeamElements*3)));
-end
-etas = unique([etas,etas_centre2tip]);
-% eles = ceil((etas_centre2tip(2:end)-etas_centre2tip(1:end-1))*opts.BeamElements); % elements per section
+
+% get beam element etas
+L = obj.Span/2;
+etas = unique([etas_centre2tip,obj.EnginePos/L,obj.KinkEta]); % list of etas that must be included
+etas = cast.util.linspaceConstrained(etas,opts.BeamElements);
+
+% get segment lengths
 seg_lengths = (etas_centre2tip(2:end)-etas_centre2tip(1:end-1))*obj.Span/2;
 % eles(eles<4) = 4;   % make sure at least 4 elemets per section
 tr = [obj.TCR_root,interp1(etas_centre2tip([2,end]),[obj.TCR_root,tc_tip],etas_centre2tip(2:end),"linear")];
@@ -63,7 +62,7 @@ tr = [obj.TCR_root,interp1(etas_centre2tip([2,end]),[obj.TCR_root,tc_tip],etas_c
 
 %% create connector
 wingMat = baff.Material.Aluminium;
-wingMat.rho = wingMat.rho*obj.WingDensityFactor;
+wingMat.rho = wingMat.rho * obj.WingDensityFactor;
 Connector = baff.Wing.FromLETESweep(seg_lengths(1),cs(1),[0 1],LE_sweeps(1),TE_sweeps(1),0.4,wingMat,ThicknessRatio=tr([1,2]),Dihedral=0);
 Connector.A = baff.util.rotz(90)*baff.util.rotx(180);
 Connector.Eta = obj.WingEta;
@@ -123,6 +122,12 @@ end
 if length(aero_eta)<2
     warning('hello')
 end
+%ensure kink is in eta set;
+if ~obj.NoKink
+    [~,ii] = min((aero_eta-inner_etas(2)).^2);
+    aero_eta(ii) = inner_etas(2);
+end
+% Wing.AeroStations = Wing.AeroStations.interpolate(unique([aero_eta,inner_etas]));
 Wing.AeroStations = Wing.AeroStations.interpolate(aero_eta);
 
 % Wing.AeroStations = Wing.AeroStations.interpolate(cast.util.AddUntillFill([Wing.AeroStations.Eta],deltaEta));
@@ -281,7 +286,7 @@ eta = [0 0.6 1];
 radius = [1 1 1/1.4]*obj.Engine.Diameter/2;
 engine = baff.BluffBody.FromEta(obj.Engine.Length,eta,radius,"Material",engine_mat,"NStations",4);
 engine.A = baff.util.rotz(-90);
-engine.Eta = (opts.EnginePos-D_join/2)/(Wing.EtaLength);
+engine.Eta = (obj.EnginePos-D_join/2)/(Wing.EtaLength);
 engine.Offset = [0;obj.Engine.Length*1.4;obj.Engine.Diameter/2+0.1];
 engine.Name = string(['engine',Tag]);
 %make engine contribute to Drag
@@ -296,8 +301,31 @@ engine.add(eng_mass);
 engine.add(pylon_mass);
 
 %% ADDED - SJ: adding flutter control masses
-
 if obj.inclFlutterMass
+    [masses, eta, massId, isInnerWing] = obj.flutterMassInterpolation;
+    ADP.FlutterMass = sum(masses)*2;
+
+    % Update inner wing
+    eta_data = Wing.AeroStations.Eta;
+    LE_offset_data = Wing.AeroStations.Chord .* Wing.AeroStations.BeamLoc;
+    LE_offset = interp1(eta_data, LE_offset_data, eta(isInnerWing));
+    wingMasses = util.MassFromArray(masses(isInnerWing), eta(isInnerWing), LE_offset, {massId{isInnerWing}});
+    Wing.add(wingMasses);
+
+    % Update floating wing
+    if HasFoldingWingtip
+        eta_data = FFWT.AeroStations.Eta;
+        LE_offset_data = FFWT.AeroStations.Chord .* FFWT.AeroStations.BeamLoc;
+        LE_offset = interp1(eta_data, LE_offset_data, eta(~isInnerWing));
+        wingMasses = util.MassFromArray(masses(~isInnerWing), eta(~isInnerWing), 0*LE_offset, {massId{~isInnerWing}});
+        FFWT.add(wingMasses);
+    end
+end
+
+% add main landing gear
+l_offset = 0.15;
+if obj.Size_ldg    
+    z_e = abs(engine.Offset(3)) + obj.Engine.Diameter/2 + tand(5)*(obj.EnginePos - D_c*l_offset);
 
     %VALENTINE'S FUNCTION GOES HERE...please follow the output format :)
     [masses, eta, massId, isInnerWing] = obj.flutterMassInterpolation;
@@ -318,9 +346,7 @@ if obj.inclFlutterMass
         %find offsets....
         eta_data = FFWT.AeroStations.Eta;
         LE_ofst_data = FFWT.AeroStations.Chord.*FFWT.AeroStations.BeamLoc;
-        LE_ofst = interp1(eta_data(:), LE_ofst_data(:), eta(~isInnerWing)); %le positions at requested
-        wingMasses = util.MassFromArray(masses(~isInnerWing), eta(~isInnerWing),0*LE_ofst, {massId{~isInnerWing}});
-        FFWT.add(wingMasses);
+        LE_ofst = interp1(eta_data(:), LE_ofst_data(:), eta(~isInnerWing)); %le positions at requesd(wingMasses);
     end
 
 end
@@ -328,7 +354,7 @@ end
 % add main landing gear
 l_offset = 0.15;
 if obj.Size_ldg    
-    z_e = abs(engine.Offset(3)) + obj.Engine.Diameter/2 + tand(5)*(opts.EnginePos - D_c*l_offset);
+    z_e = abs(engine.Offset(3)) + obj.Engine.Diameter/2 + tand(5)*(obj.EnginePos - D_c*l_offset);
     L_ldg = sind(85)/sind(50)*z_e/sqrt(2);
     obj.L_ldg = L_ldg;
     obj.Eta_ldg = (obj.L_ldg + D_c*l_offset-D_join/2)/Wing.EtaLength;
@@ -353,9 +379,6 @@ end
 Wing.add(ldg);
 obj.Masses.LandingGear = obj.m_main_ldg*2;
 Masses = obj.Masses;
-
-% add beam nodes at engine and landing gear etas.
-Wing.Stations = Wing.Stations.interpolate(unique([wing_etas,engine.Eta,ldg.Eta]));
 
 % add up fuel mass
 FuelMassTotal = ConFuelMassTotal + WingFuelMassTotal;
@@ -406,61 +429,5 @@ if te_sweep(2) > 0
     A_1 = c_r*R_f;
     A_2 = (c_r+c)/2*L2;
     S = 2*(A_1+A_2+A_3);
-end
-end
-
-
-% function [S,cs,le_sweep,te_sweep] = wingArea(S,AR,lambda,k,c,Lambda_LE,Lambda_TE,D_f)
-% b = sqrt(AR*S)/2;
-% Lambda_LE = atand(c/4*(1-lambda)/(b*(1-k))+tand(Lambda_LE));
-% R_f = D_f/2;
-% c_t = lambda*c;
-% c_r = c+(tand(Lambda_LE)-tand(Lambda_TE))*(k*b-R_f);
-% A_1 = (c+c_t)/2*b*(1-k);
-% A_2 = (c_r+c)/2*(k*b-D_f/2);
-% A_3 = c_r*R_f;
-% S = 2*(A_1+A_2+A_3);
-% cs = [c_r,c_r,c,c_t];
-% le_sweep = [0 1 1]*Lambda_LE;
-% L = b*(1-k);
-% te_sweep_end = atand((tand(Lambda_LE)*L+c_t-c)/L);
-% te_sweep = [0,Lambda_TE te_sweep_end];
-% end
-
-function vals = linspaceConstrained(xs,N)
-if N<length(xs)
-    error('N less than length of array')
-elseif N == length(xs)
-    vals = xs;
-    return
-end
-N = N - length(xs);
-delta = xs(2:end)-xs(1:end-1);
-delta = delta./(xs(end)-xs(1));
-Ns = round(delta*N);
-while sum(Ns)~= N
-    if sum(Ns)>N
-        [~,idx] = max(Ns);
-        Ns(idx) = Ns(idx)-1;
-    else
-        [~,idx] = min(Ns);
-        Ns(idx) = Ns(idx)+1;
-    end
-end
-vals = linspace(xs(1),xs(2),2+Ns(1));
-for i = 2:length(xs)-1
-    tmp = linspace(xs(i),xs(i+1),2+Ns(i));
-    vals = [vals,tmp(2:end)];
-end
-end
-
-function vals = AddUntillFill(vals,gap)
-delta = vals(2:end)-vals(1:end-1);
-[md,idx] = max(abs(delta));
-while md>gap
-    new_val = vals(idx) + (vals(idx+1)-vals(idx))*0.5;
-    vals = [vals(1:idx),new_val,vals((idx+1):end)];
-    delta = vals(2:end)-vals(1:end-1);
-    [md,idx] = max(abs(delta));
 end
 end
