@@ -1,12 +1,8 @@
-load('example_data/UB321_simple.mat')
-
-
 %% ========================= Set Hyper-parameters =========================
-load('example_data/A220_simple.mat')
-
+load('example_data/UB321_simple.mat')
 ADP.IsSweepDependent = true;
-% ADP.LoadsSurrogateType = "Enforced";
-ADP.LoadsSurrogateType = "Nastran";
+ADP.LoadsSurrogateType = "Enforced";
+% ADP.LoadsSurrogateType = "Nastran";
 ADP.WingIndependentVar = "AR";
 ADP.isWingAreaFixed = false;
 

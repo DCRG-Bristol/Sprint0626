@@ -38,33 +38,21 @@ for i = 1:opts.MaxIter+1
     eta = ys./max(ys); %normalise span
 
     % Fs_norm = interp1(eta,Fs,obj.RefEta);
-    % if obj.UseJones
-    %     % scale by area
-    %     A = trapz(eta,Fs)/trapz(eta,gamma_jones(eta,obj.JonesFactor));
-    %     % scale at a specified eta
-    %     %         A = Fs_norm./gamma_jones(obj.RefEta,obj.JonesFactor);
-    %     %get target distribution
-    %     target_lift = A.*gamma_jones(eta,obj.JonesFactor);
-    % else % use prandtl
-    %     % scale by area
-    %     A = trapz(eta,Fs)/trapz(eta,gamma_prandtl(eta,obj.PrandtlFactor));
-    %     % scale at a specified eta
-    %     %         A = Fs_norm./gamma_prandtl(obj.RefEta,obj.PrandtlFactor);
-    %     %get target distribution
-    %     target_lift = A.*gamma_prandtl(eta,obj.PrandtlFactor);
-    % end
-
-    % use JDC lift dist
-    load(fullfile(fileparts(mfilename('fullpath')),'private','LIFT_DISTRIBUTION_V1.mat'),'lift_dist');
-    % clean lift dist
-    ys_L = abs([0;lift_dist.Yle;lift_dist.Yle(end)*1.001]);
-    L_eta = ys_L./max(ys_L);
-    Ls = [lift_dist.c_cl([1,1:end]);0];
-    gamma_JDC = @(eta)interp1(L_eta,Ls,abs(eta),"makima");
-    A = trapz(eta,Fs)/trapz(eta,gamma_JDC(eta));
-    target_lift = A.*gamma_JDC(eta);
-    % f = figure(111);clf;hold on;plot(eta,target_lift);plot(eta,target_lift2)
-
+    if obj.UseJones
+        % scale by area
+        A = trapz(eta,Fs)/trapz(eta,gamma_jones(eta,obj.JonesFactor));
+        % scale at a specified eta
+        %         A = Fs_norm./gamma_jones(obj.RefEta,obj.JonesFactor);
+        %get target distribution
+        target_lift = A.*gamma_jones(eta,obj.JonesFactor);
+    else % use prandtl
+        % scale by area
+        A = trapz(eta,Fs)/trapz(eta,gamma_prandtl(eta,obj.PrandtlFactor));
+        % scale at a specified eta
+        %         A = Fs_norm./gamma_prandtl(obj.RefEta,obj.PrandtlFactor);
+        %get target distribution
+        target_lift = A.*gamma_prandtl(eta,obj.PrandtlFactor);
+    end
 
     %get delta between two distributions
     delta = target_lift-(Fs);
