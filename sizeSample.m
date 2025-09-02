@@ -1,6 +1,6 @@
 function output = sizeSample(input,saveMat,printoutput)
 
-fuel_price = 0.64995; % USD/kg
+fuel_price = 0.64995; % USD/kg 
 oil_price = 30.0; % USD/kg
 range_mission = 3000./(cast.SI.Nmile); % range of mission [km]
 N_pax = 140; % Number of passengers
@@ -8,7 +8,7 @@ N_eng = 2; % Number of engines
 
 % This function does the sizing for one sample of input parameters
 load('example_data/A220_simple.mat')
-ADP.AR = input(1);
+ADP.AR = input(1); % aspect ratio
 ADP.HingeEta = input(2);
 ADP.FlareAngle = input(3);
 ADP.ADR.M_c = input(4);
