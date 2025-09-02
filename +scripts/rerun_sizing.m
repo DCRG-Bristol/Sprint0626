@@ -8,7 +8,7 @@ ADP.isWingAreaFixed = false;
 
 % hyper-parameters
 ADP.AR = 18.6;
-ADP.HingeEta = 0.7;
+ADP.HingeEta = 1;
 ADP.FlareAngle = 15;
 ADP.ADR.M_c = 0.7;
 ADP.ConstraintAnalysis();
@@ -25,7 +25,11 @@ ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
 SubHarmonic = [16/19.28,6000./cast.SI.km];
 sizeOpts = util.SizingOpts(IncludeGusts=false,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
-[ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
+if ADP.HingeEta == 1
+    [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","Baseline");
+else 
+    [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
+end  
 % get data during cruise
 fh.printing.title('Get Cruise Loads','Length',60)
 [~,Lds_c]=ADP.StructuralSizing(...
