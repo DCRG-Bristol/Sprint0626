@@ -102,6 +102,7 @@ options_uq.ExpDesign.X = X;                             % 'experimental design' 
 options_uq.ExpDesign.Y = Y;
 options_uq.ExpDesign.NSamples = size(X, 1);
 surrogates = uq_createModel(options_uq);                % train the surrogate
+fprintf('Number of training points added: %d out of a possible: %d\n', size(X, 1), N_train_max);
 
 % (only for UQ applications) run a test to check if surrogates are actually better than classical MC for mean and sigma estimation
 if flag_test_for_mean_and_sigma                             
@@ -185,6 +186,7 @@ if strcmp(surrogates.Options.MetaType, 'PCE')
         options_uq.ExpDesign.X = X;                     
         options_uq.ExpDesign.Y = Y;                     
         surrogates = uq_createModel(options_uq);
+        fprintf('Number of training points added: %d out of a possible: %d\n', size(X, 1), N_train_max);
         validation_errors_new = zeros(1, size(Y, 2));  
         for ii = 1:size(Y, 2)
             validation_errors_new(1, ii) = surrogates.Error(ii).ModifiedLOO;    % collect the validation error for each QI
@@ -242,6 +244,7 @@ else  % Kriging
         options_uq.ExpDesign.X = X;                     
         options_uq.ExpDesign.Y = Y;                     
         surrogates = uq_createModel(options_uq);
+        fprintf('Number of training points added: %d out of a possible: %d\n', size(X, 1), N_train_max);
         validation_errors_new = zeros(1, size(Y, 2));  
         for ii = 1:size(Y, 2)
             validation_errors_new(1, ii) = surrogates.Error(ii).LOO;        % collect the validation error for each QI
