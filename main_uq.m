@@ -58,11 +58,12 @@ flag_test_for_mean_and_sigma = false;
 % Plots generator for parameter sweeps for the design variables
 inputs_name = ["Aspect Ratio (AR)", "Mach number"];  % list of the names of the design variables
 outputs_name = ["Block fuel", "Direct operating cost", "Wingspan", "CD0", "CD cruise", "MTOM"];   % list of the names of the QIs
+N_outputs = length(outputs_name);             % number of quantities of interest (QIs)
 descriptive_title_for_plots = sprintf('%s surrogate', MetaOpts_straight_wing.MetaType);
 N_eval = 100;                                        % number of discretisation points for each design variable (for plots)
 plotsfolderName = 'straight_wing_uq'; 
 mkdir(plotsfolderName, 'plots_uq');
-surrogates_straight_wing =  surrogates_uq(MetaOpts_straight_wing, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+surrogates_straight_wing =  surrogates_uq(MetaOpts_straight_wing, N_outputs, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
 elementToSave = surrogates_straight_wing;
 save(fullfile(plotsfolderName, 'surrogates_straight_wing.mat'), 'elementToSave'); % save the surrogate
 % visualise the outputs as a function of the design variables (i.e., design exploration)
@@ -194,11 +195,12 @@ flag_test_for_mean_and_sigma = false;
 % Plots generator for parameter sweeps for the design variables
 inputs_name = ["Aspect Ratio (AR)", "Mach number"];  % list of the names of the design variables
 outputs_name = ["Block fuel", "Direct operating cost", "Wingspan", "CD0", "CD cruise", "MTOM"];   % list of the names of the QIs
+N_outputs = length(outputs_name);             % number of quantities of interest (QIs)
 descriptive_title_for_plots = sprintf('%s surrogate', MetaOpts_swept_wing.MetaType);
 N_eval = 100;                                        % number of discretisation points for each design variable (for plots)
 plotsfolderName = 'swept_wing_uq'; 
 mkdir(plotsfolderName, 'plots_uq');
-surrogates_swept_wing =  surrogates_uq(MetaOpts_swept_wing, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+surrogates_swept_wing =  surrogates_uq(MetaOpts_swept_wing, N_outputs, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
 elementToSave = surrogates_swept_wing;
 save(fullfile(plotsfolderName, 'surrogates_swept_wing.mat'), 'elementToSave'); % save the surrogate
 % visualise the outputs as a function of the design variables (i.e., design exploration)
@@ -324,11 +326,12 @@ flag_test_for_mean_and_sigma = false;
 % Plots generator for parameter sweeps for the design variables
 inputs_name = ["Sweep angle", "Mach number"];  % list of the names of the design variables
 outputs_name = ["Block fuel", "Direct operating cost", "Wingspan", "CD0", "CD cruise", "MTOM"];   % list of the names of the QIs
+N_outputs = length(outputs_name);             % number of quantities of interest (QIs)
 descriptive_title_for_plots = sprintf('%s surrogate', MetaOpts_custom_swept_wing.MetaType);
 N_eval = 100;                                        % number of discretisation points for each design variable (for plots)
 plotsfolderName = 'indep_sweep_wing_uq'; 
 mkdir(plotsfolderName, 'plots_uq');
-surrogates_custom_swept_wing =  surrogates_uq(MetaOpts_custom_swept_wing, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+surrogates_custom_swept_wing =  surrogates_uq(MetaOpts_custom_swept_wing, N_outputs, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
 elementToSave = surrogates_custom_swept_wing;
 save(fullfile(plotsfolderName, 'surrogates_indep_sweep_wing.mat'), 'elementToSave'); % save the surrogate
 % visualise the outputs as a function of the design variables (i.e., design exploration)
@@ -455,11 +458,12 @@ flag_test_for_mean_and_sigma = false;
 % Plots generator for parameter sweeps for the design variables
 inputs_name = ["Sweep angle", "Mach number", "Aspect ratio"];  % list of the names of the design variables
 outputs_name = ["Block fuel", "Direct operating cost", "Wingspan", "CD0", "CD cruise", "MTOM"];   % list of the names of the QIs
+N_outputs = length(outputs_name);                    % number of quantities of interest (QIs)
 descriptive_title_for_plots = sprintf('%s surrogate', MetaOpts_all_custom_swept_wing.MetaType);
 N_eval = 100;                                        % number of discretisation points for each design variable (for plots)
 plotsfolderName = 'indep_sweep_and_ar_wing_uq'; 
 mkdir(plotsfolderName, 'plots_uq');
-surrogates_all_custom_swept_wing =  surrogates_uq(MetaOpts_all_custom_swept_wing, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+surrogates_all_custom_swept_wing =  surrogates_uq(MetaOpts_all_custom_swept_wing, N_outputs, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
 elementToSave = surrogates_all_custom_swept_wing;
 save(fullfile(plotsfolderName, 'surrogates_indep_sweep_and_ar_wing.mat'), 'elementToSave'); % save the surrogate
 % visualise the outputs as a function of the design variables (i.e., design exploration)
@@ -543,6 +547,139 @@ grid on;
 legend();
 saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_bf_and_doc_with_indep_sweep_and_ar.png'))
 saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_bf_and_doc_with_indep_sweep_and_ar.fig'))
+
+%% 6. Straight wing case (NASTRAN; design variables: AR, Mach no.)
+
+% This section generates many plots, which are saved rather than displayed on the screen
+set(0, 'DefaultFigureVisible', 'off'); 
+
+% Description of the uncertain variables for UQLab
+InputOpts_straight_wing_nastran.Marginals(1).Type = 'Uniform';
+InputOpts_straight_wing_nastran.Marginals(1).Parameters = [11, 23]; % (Aspect Ratio) lower and upper design optimisation bound
+InputOpts_straight_wing_nastran.Marginals(2).Type = 'Uniform';
+InputOpts_straight_wing_nastran.Marginals(2).Parameters = [0.45, 0.69]; % (Mach no.) lower and upper design optimisation bound - straight wing
+% The uncertain variables are inputs for physical maps that output QIs (i.e., Block Fuel, DOC, ...)
+myInput_straight_wing_nastran = uq_createInput(InputOpts_straight_wing_nastran);
+
+plotsfolderName = 'straight_wing_nastran_uq'; 
+mkdir(plotsfolderName)
+
+% % Description of the physical model for UQLab
+ModelOpts_straight_wing_nastran.mFile = 'physical_model_straight_wing_nastran';
+ModelOpts_straight_wing_nastran.isVectorized = false;
+myModel_straight_wing_nastran = uq_createModel(ModelOpts_straight_wing_nastran);
+
+N_train = 5;    % initial training set size (the set will be updated until the training budget is exhausted or until the surrogate validation error is low enough)
+MetaOpts_straight_wing_nastran.Type = 'Metamodel';                         % 'metamodel': another word for 'surrogate'    
+MetaOpts_straight_wing_nastran.MetaType = 'PCE';                           % Polynomial Chaos Expansion surrogate model
+MetaOpts_straight_wing_nastran.Input = myInput_straight_wing_nastran;      % design variables
+MetaOpts_straight_wing_nastran.FullModel = myModel_straight_wing_nastran;  % the physical model as a UQLab object
+MetaOpts_straight_wing_nastran.ExpDesign.NSamples = N_train;               % 'experimental design' (ExpDesign): another word for 'training set'
+if strcmp(MetaOpts_straight_wing_nastran.MetaType, 'Kriging')
+    MetaOpts_straight_wing_nastran.ExpDesign.Sampling = 'User';
+end
+
+flag_parfor = false;            % can we run the physical model in parallel to build the training set? (True/False)
+seed = 100;                     % seed for reproducibility due to randomness in sampling the training set
+N_train_increment = 8;          % we will increment the training set size until we reach convergence
+N_train_max = 20;               % training budget (i.e., maximum number of training points allowed)
+flag_test_for_mean_and_sigma = false;
+
+% Plots generator for parameter sweeps for the design variables
+inputs_name = ["Aspect Ratio (AR)", "Mach number"];  % list of the names of the design variables
+outputs_name = ["Block fuel", "Direct operating cost", "Wingspan", "CD0", "CD cruise", "MTOM"];   % list of the names of the QIs
+N_outputs = length(outputs_name);             % number of quantities of interest (QIs)
+% descriptive_title_for_plots = sprintf('%s surrogate', MetaOpts_straight_wing_nastran.MetaType);
+N_eval = 100;                                        % number of discretisation points for each design variable (for plots)
+plotsfolderName = 'straight_wing_nastran_uq'; 
+mkdir(plotsfolderName, 'plots_uq');
+surrogates_straight_wing_nastran =  surrogates_uq(MetaOpts_straight_wing_nastran, N_outputs, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+elementToSave = surrogates_straight_wing_nastran;
+save(fullfile(plotsfolderName, 'surrogates_straight_wing_nastran.mat'), 'elementToSave'); % save the surrogate
+% visualise the outputs as a function of the design variables (i.e., design exploration)
+uncertain_variables_exploration(elementToSave, inputs_name, outputs_name, descriptive_title_for_plots, N_eval, seed, plotsfolderName); % plots generator using the surrogates 
+
+% add readme file
+fileID = fopen(fullfile(plotsfolderName, 'readme.txt'), 'w');
+fprintf(fileID, 'Surrogates for each quantity of interest (QI) as a function of the uncertain variables.\n\n');
+fprintf(fileID, 'Legend:\n');
+N_outputs = length(outputs_name);             % number of quantities of interest (QIs)
+N_variables = length(inputs_name);            % number of uncertain variables
+for kk = 1:N_outputs
+    fprintf(fileID, 'QI %d: %s\n', kk, outputs_name(kk));
+end   
+for kk = 1:N_variables
+    fprintf(fileID, 'Uncertain variable %d: %s\n', kk, inputs_name(kk));
+end    
+fprintf(fileID, 'Methodology: %s\n\n', descriptive_title_for_plots); 
+fprintf(fileID, 'The trained surrogates and most of the design exploration figures are stored externally due to size limits.\n'); 
+fclose(fileID);
+disp('Readme file for the surrogates has been created successfully.');
+
+set(0, 'DefaultFigureVisible', 'on');
+
+% multi-objective optimisation using the surrogates
+straight_nastran_nvars = 2;              % Number of design variables
+straight_nastran_lb = [11, 0.45];        % Lower bounds
+straight_nastran_ub = [23, 0.69];        % Upper bounds
+
+plotsfolderName = 'straight_wing_nastran_uq'; 
+addpath(plotsfolderName);
+surrogates_straight_nastran_bf_doc = load('surrogates_straight_wing_nastran.mat');
+surrogates_straight_nastran_bf_doc = surrogates_straight_nastran_bf_doc.elementToSave;
+straight_nastran_objFun = @(x) myObjectives(x, surrogates_straight_nastran_bf_doc);
+
+straight_nastran_options = optimoptions('gamultiobj', 'Display', 'iter', 'PlotFcn', @gaplotpareto);
+[straight_nastran_wing_pareto, straight_nastran_fval] = gamultiobj(straight_nastran_objFun, straight_nastran_nvars, [], [], [], [], straight_nastran_lb, straight_nastran_ub, straight_nastran_options);
+straight_nastran_pareto_size = size(straight_nastran_wing_pareto, 1);
+
+true_model_straight_nastran_output_pareto = nan(straight_nastran_pareto_size, N_outputs);     
+if flag_parfor
+    parfor ii=1:straight_nastran_pareto_size
+        try
+            true_model_straight_nastran_output_pareto(ii, :) = uq_evalModel(myModel_straight_wing_nastran, straight_nastran_wing_pareto(ii, :));     
+        catch ME
+            fprintf('Error in sample %d: %s\n', ii, ME.message);
+        end
+    end
+else   
+    for ii=1:straight_nastran_pareto_size
+        try
+            true_model_straight_nastran_output_pareto(ii, :) = uq_evalModel(myModel_straight_wing_nastran, straight_nastran_wing_pareto(ii, :));
+        catch ME
+            fprintf('Error in sample %d: %s\n', ii, ME.message);
+        end
+    end
+end   
+straight_nastran_wing_pareto = straight_nastran_wing_pareto(~any(isnan(true_model_straight_nastran_output_pareto), 2), :);                           
+true_model_straight_nastran_output_pareto = true_model_straight_nastran_output_pareto(~any(isnan(true_model_straight_nastran_output_pareto), 2), :); 
+surrogate_output_straight_nastran_pareto = uq_evalModel(surrogates_straight_nastran_bf_doc, straight_nastran_wing_pareto);
+
+try              % the physical model might crash at all the Pareto points
+    for ii = 1:size(straight_nastran_wing_pareto, 1)
+        relative_surrogate_error_straight_nastran_bf(ii) = abs(surrogate_output_straight_nastran_pareto(ii, 1)/true_model_straight_nastran_output_pareto(ii, 1)-1);
+        relative_surrogate_error_straight_nastran_doc(ii) = abs(surrogate_output_straight_nastran_pareto(ii, 2)/true_model_straight_nastran_output_pareto(ii, 2)-1);
+    end
+    
+    save(fullfile(plotsfolderName, 'opt_for_bf_and_doc_with_straight_wing_nastran.mat'), 'straight_nastran_wing_pareto', 'true_model_straight_nastran_output_pareto', 'relative_surrogate_error_straight_nastran_bf', 'relative_surrogate_error_straight_nastran_doc')
+    
+    true_model_straight_nastran_sorted_points = sortrows(true_model_straight_nastran_output_pareto, 1);
+    surrogate_model_straight_nastran_sorted_points = sortrows(surrogate_output_straight_nastran_pareto, 1);
+    
+    fig = figure();
+    plot(true_model_straight_nastran_sorted_points(:,1), true_model_straight_nastran_sorted_points(:,2), 'o-', 'LineWidth', 2, 'DisplayName', 'Physical Model');
+    hold on 
+    plot(surrogate_model_straight_nastran_sorted_points(:,1), surrogate_model_straight_nastran_sorted_points(:,2), 'o-', 'LineWidth', 2, 'DisplayName', 'Surrogate Model');
+    xlabel('Fuel Burn (FB)');
+    ylabel('Direct Operating Cost (DOC)');
+    title('Pareto Front (Genetic Algorithm with Kriging surrogates)');
+    grid on;
+    legend('Location', 'best');
+    saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_bf_and_doc_with_straight_wing_nastran.png'))
+    saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_bf_and_doc_with_straight_wing_nastran.fig'))
+catch ME
+    fprintf('Error: %s\n', ME.message);
+end    
 
 %%
 function f = myObjectives(x, surrogates_bf_doc)
