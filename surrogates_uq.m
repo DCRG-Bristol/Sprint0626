@@ -1,4 +1,4 @@
-function surrogates = surrogates_uq(options_uq, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma)
+function surrogates = surrogates_uq(options_uq, nOutputs, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma)
 %% Title section - Surrogates for UQ or optimisation (design space exploration) for a physical model 
 %{
 --------------------------------------------------------
@@ -10,6 +10,7 @@ Comments:
 --------------------------------------------------------
 Input:
 * options_uq               : UQLab object; key properties required to build the surrogate model
+* nOutputs                 : the number of key quantities of interest - QIs (outputs)
 * N_train_increment        : increment for the training set size until convergence is reached
 * N_train_max              : training budget (i.e., maximum number of training points allowed)
 * flag_parfor              : can we run the physical model in parallel to build the training set? (True/False)
@@ -74,10 +75,6 @@ if strcmp(input_distributions.Marginals(1).Type, 'Uniform')
     end 
 end
 
-% Extract the number of outputs (QIs) (we assume that the physical model does not crash for the first training point)
-Y_tmp = uq_evalModel(model_uq, X(1, :));
-nOutputs = size(Y_tmp, 2);
-
 Y = nan(N_train, nOutputs);     % initialise the training outputs   
 if flag_parfor
     parfor ii=1:N_train
@@ -98,6 +95,7 @@ else
 end   
 X = X(~any(isnan(Y), 2), :);                            % remove NaN physical model outputs from the training set
 Y = Y(~any(isnan(Y), 2), :);                            % remove NaN physical model outputs from the training set
+save(fullfile(plotsfolderName, 'training_set.mat'), 'X', 'Y');             % Save both to a .mat file
 options_uq.ExpDesign.X = X;                             % 'experimental design' (ExpDesign): another word for 'training set'
 options_uq.ExpDesign.Y = Y;
 options_uq.ExpDesign.NSamples = size(X, 1);
@@ -182,7 +180,8 @@ if strcmp(surrogates.Options.MetaType, 'PCE')
         Ynew = Ynew(~any(isnan(Ynew), 2), :);                          % remove NaN physical model outputs from the new training set
         % Use both old and new training samples and retrain the surrogate
         X = [X; Xnew];                                
-        Y = [Y; Ynew];                                  
+        Y = [Y; Ynew]; 
+        save(fullfile(plotsfolderName, 'training_set.mat'), 'X', 'Y');             % Save both to a .mat file
         options_uq.ExpDesign.X = X;                     
         options_uq.ExpDesign.Y = Y;                     
         surrogates = uq_createModel(options_uq);
@@ -240,7 +239,8 @@ else  % Kriging
         Ynew = Ynew(~any(isnan(Ynew), 2), :);                          % remove NaN physical model outputs from the training set
         % Use both old and new training samples and retrain the surrogate
         X = [X; Xnew];                                
-        Y = [Y; Ynew];                                  
+        Y = [Y; Ynew];    
+        save(fullfile(plotsfolderName, 'training_set.mat'), 'X', 'Y');             % Save both to a .mat file
         options_uq.ExpDesign.X = X;                     
         options_uq.ExpDesign.Y = Y;                     
         surrogates = uq_createModel(options_uq);
