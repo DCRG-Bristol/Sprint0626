@@ -74,7 +74,7 @@ if strcmp(input_distributions.Marginals(1).Type, 'Uniform')
     %  elseif N_variables >= 4: don't add centre and corners and proceed with a LHS training set
     end 
 end
-
+tic; % Start timing
 Y = nan(N_train, nOutputs);     % initialise the training outputs   
 if flag_parfor
     parfor ii=1:N_train
@@ -93,9 +93,12 @@ else
         end
     end
 end   
+
 X = X(~any(isnan(Y), 2), :);                            % remove NaN physical model outputs from the training set
 Y = Y(~any(isnan(Y), 2), :);                            % remove NaN physical model outputs from the training set
 save(fullfile(plotsfolderName, 'training_set.mat'), 'X', 'Y');             % Save both to a .mat file
+elapsedTime = toc; % End timing
+fprintf('Elapsed time for %d training points: %.4f seconds\n', size(X, 1), elapsedTime);
 options_uq.ExpDesign.X = X;                             % 'experimental design' (ExpDesign): another word for 'training set'
 options_uq.ExpDesign.Y = Y;
 options_uq.ExpDesign.NSamples = size(X, 1);
@@ -158,6 +161,7 @@ if strcmp(surrogates.Options.MetaType, 'PCE')
             Xnew = uq_LHSify(X, N_train_increment, input_distributions);   % new training inputs that preserve the Latin Hypercube structure
         end
         N_model_outputs = size(Y, 2);
+        tic; % Start timing
         Ynew = nan(N_train_increment, N_model_outputs);     % initialise the new training outputs
         if flag_parfor
             parfor ii=1:N_train_increment
@@ -182,6 +186,8 @@ if strcmp(surrogates.Options.MetaType, 'PCE')
         X = [X; Xnew];                                
         Y = [Y; Ynew]; 
         save(fullfile(plotsfolderName, 'training_set.mat'), 'X', 'Y');             % Save both to a .mat file
+        elapsedTime = toc; % End timing
+        fprintf('Elapsed time for %d training points: %.4f seconds\n', size(Xnew, 1), elapsedTime);
         options_uq.ExpDesign.X = X;                     
         options_uq.ExpDesign.Y = Y;                     
         surrogates = uq_createModel(options_uq);
@@ -217,6 +223,7 @@ else  % Kriging
             Xnew = uq_LHSify(X, N_train_increment, input_distributions);   % new training inputs that preserve the Latin Hypercube structure
         end
         N_model_outputs = size(Y, 2);
+        tic; % Start timing
         Ynew = nan(N_train_increment, N_model_outputs);     % initialise the new training outputs
         if flag_parfor
             parfor ii=1:N_train_increment
@@ -241,6 +248,8 @@ else  % Kriging
         X = [X; Xnew];                                
         Y = [Y; Ynew];    
         save(fullfile(plotsfolderName, 'training_set.mat'), 'X', 'Y');             % Save both to a .mat file
+        elapsedTime = toc; % End timing
+        fprintf('Elapsed time for %d training points: %.4f seconds\n', size(Xnew, 1), elapsedTime);
         options_uq.ExpDesign.X = X;                     
         options_uq.ExpDesign.Y = Y;                     
         surrogates = uq_createModel(options_uq);
