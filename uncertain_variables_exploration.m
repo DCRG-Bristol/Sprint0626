@@ -362,7 +362,7 @@ if strcmp(surrogates.Options.MetaType, 'PCE') % Sobol indices for PCE surrogates
     end 
     else    % Sobol indices for Kriging surrogates need to be estimated using large MC samples
         SobolSensOpts.SaveEvaluations = false;
-        SobolSensOpts.Sobol.SampleSize = 50000;              % large MC sample to estimate the Sobol indices
+        SobolSensOpts.Sobol.SampleSize = 200000;              % large MC sample to estimate the Sobol indices
         SobolAnalysis = uq_createAnalysis(SobolSensOpts);
         %plots - first-order Sobol indices for each QI
         for kk = 1:N_outputs
