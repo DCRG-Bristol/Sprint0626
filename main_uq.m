@@ -1103,6 +1103,282 @@ legend('Location', 'best');
 saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_mean_and_sigma_with_straight_wing_uncertain_price.png'))
 saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_mean_and_sigma_with_straight_wing_uncertain_price.fig'))
 
+%% 9. Robust optimisation (swept wing, uncertain fuel price)
+
+% Robust Optimisation - Description of the uncertain variables for UQLab
+InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Type = 'Uniform';
+InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Parameters = [0.9*0.64995, 1.1*0.64995]; % (Fuel price) lower and upper uncertainty bound
+InputOpts_custom_swept_wing_uncertain_price.Marginals(2).Type = 'Uniform';
+InputOpts_custom_swept_wing_uncertain_price.Marginals(2).Parameters = [0.9*30.0, 1.1*30.0]; % (Oil price) lower and upper uncertainty bound
+% The uncertain variables are inputs for physical maps that output QIs
+myInput_custom_swept_wing_uncertain_price = uq_createInput(InputOpts_custom_swept_wing_uncertain_price); 
+
+set(0, 'DefaultFigureVisible', 'off');
+
+sa_custom_swept_wing_uncertain_price = linspace(0, 45, 10);  
+mach_custom_swept_wing_uncertain_price = linspace(0.45, 0.9, 10);
+surrogates_custom_swept_wing_uncertain_price = cell(length(sa_custom_swept_wing_uncertain_price), length(mach_custom_swept_wing_uncertain_price));
+
+for ii = 1:length(sa_custom_swept_wing_uncertain_price)
+    for jj = 1:length(mach_custom_swept_wing_uncertain_price)
+        % Description of the physical model for UQLab
+        ModelOpts_custom_swept_wing_uncertain_price.mFile = 'physical_model_indep_sweep_uncertain_fuel_price';
+        ModelOpts_custom_swept_wing_uncertain_price.isVectorized = false;
+        ModelOpts_custom_swept_wing_uncertain_price.Parameters = [sa_custom_swept_wing_uncertain_price(ii) mach_custom_swept_wing_uncertain_price(jj)];
+        myModel_custom_swept_wing_uncertain_price = uq_createModel(ModelOpts_custom_swept_wing_uncertain_price);
+
+        N_train = 5;                                     % initial training set size (the set will be updated until the surrogate validation error is low enough)
+        MetaOpts_custom_swept_wing_uncertain_price.Type = 'Metamodel';             % 'metamodel': another word for 'surrogate'
+        % MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'Kriging';      
+        MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'PCE';
+        MetaOpts_custom_swept_wing_uncertain_price.Input = myInput_custom_swept_wing_uncertain_price;        % probability distribution for the uncertain variables
+        MetaOpts_custom_swept_wing_uncertain_price.FullModel = myModel_custom_swept_wing_uncertain_price;    % the physical model as a UQLab object
+        MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.NSamples = N_train;   % 'experimental design' (ExpDesign): another word for 'training set'
+        if strcmp(MetaOpts_custom_swept_wing_uncertain_price.MetaType, 'Kriging')
+            MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.Sampling = 'User';
+        end
+
+        flag_parfor = true;             % can we run the physical model in parallel to build the training set? (True/False)
+        seed = 100;                     % seed for reproducibility due to randomness in sampling the training set
+        N_train_increment = 5;          % we will increment the training set size until we reach convergence
+        N_train_max = 5;                % training budget (i.e., maximum number of training points allowed)
+        % run a test to check if surrogates are actually faster than classical MC for mean and sigma estimation  
+        % recommended only for cheap models (to find the true mean and sigma, we need a large MC with the physical model) 
+        flag_test_for_mean_and_sigma = false;
+
+        % Plots generator for parameter sweeps for the uncertain variables
+        inputs_name_custom_swept_wing_uncertain_price = ["Fuel price", "Oil price"];  % list of the names of the uncertain variables
+        outputs_name_custom_swept_wing_uncertain_price = ["Total operating cost"];    % list of the names of the QIs
+        N_outputs_custom_swept_wing_uncertain_price = length(outputs_name_custom_swept_wing_uncertain_price);           % number of quantities of interest (QIs)
+        descriptive_title_for_plots_custom_swept_wing_uncertain_price = sprintf('%s surrogate (Sweep angle:%.2e, Mach:%.2e)', MetaOpts_custom_swept_wing_uncertain_price.MetaType, sa_custom_swept_wing_uncertain_price(ii), mach_custom_swept_wing_uncertain_price(jj));
+        N_eval = 100;                                                        % number of discretisation points for each uncertain variable (for plots)
+        plotsfolderName = 'custom_swept_wing_uncertain_price_optimisation_uq'; 
+        subfolder_plotsfolderName = sprintf('sa_%u_mach_%u', ii, jj); % each 'case' refers to one fixed combination of design variables
+        fullPath = fullfile(plotsfolderName, subfolder_plotsfolderName);
+        mkdir(fullPath);
+        mkdir(fullPath, 'plots_uq');
+        try
+            surrogates_custom_swept_wing_uncertain_price{ii, jj} =  surrogates_uq(MetaOpts_custom_swept_wing_uncertain_price, N_outputs_custom_swept_wing_uncertain_price, N_train_increment, N_train_max, flag_parfor, seed, fullPath, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+            elementToSave = surrogates_custom_swept_wing_uncertain_price{ii, jj}; 
+            save(fullfile(fullPath, sprintf('surrogate_total_operating_cost_sa_case_%u_mach_case_%u.mat', ii, jj)), 'elementToSave'); % save the surrogate
+            uncertain_variables_exploration(elementToSave, inputs_name_custom_swept_wing_uncertain_price, outputs_name_custom_swept_wing_uncertain_price, descriptive_title_for_plots_custom_swept_wing_uncertain_price, N_eval, seed, fullPath); % plots generator using the surrogates 
+            % add readme to explain each 'case' (i.e., each fixed combination (ii, jj) of design variables)
+            fileID = fopen(fullfile(fullPath, 'readme.txt'), 'w');
+            fprintf(fileID, 'Surrogates for each quantity of interest (QI) as a function of the uncertain variables (the deterministic variables are fixed).\n\n');
+            fprintf(fileID, 'Legend:\n');
+            N_outputs_custom_swept_wing_uncertain_price = length(outputs_name_custom_swept_wing_uncertain_price);             % number of quantities of interest (QIs)
+            N_variables_custom_swept_wing_uncertain_price = length(inputs_name_custom_swept_wing_uncertain_price);            % number of uncertain variables
+            for kk = 1:N_outputs_custom_swept_wing_uncertain_price
+                fprintf(fileID, 'QI %d: %s\n', kk, outputs_name_custom_swept_wing_uncertain_price(kk));
+            end   
+            for kk = 1:N_variables_custom_swept_wing_uncertain_price
+                fprintf(fileID, 'Uncertain variable %d: %s\n', kk, inputs_name_custom_swept_wing_uncertain_price(kk));
+            end    
+            fprintf(fileID, 'Deterministic variable 1: Sweep angle; Case: %d out of %d; Value: %.5f\n', ii, length(sa_custom_swept_wing_uncertain_price), sa_custom_swept_wing_uncertain_price(ii));
+            fprintf(fileID, 'Deterministic variable 2: Mach number; Case: %d out of %d; Value: %.5f\n', jj, length(mach_custom_swept_wing_uncertain_price), mach_custom_swept_wing_uncertain_price(jj));
+            fprintf(fileID, 'Methodology: %s\n\n', descriptive_title_for_plots_custom_swept_wing_uncertain_price);
+            fprintf(fileID, 'The trained surrogates and most of the design exploration figures are stored externally due to size limits.\n'); 
+            fclose(fileID);
+            disp('Readme file for the surrogates has been created successfully.');
+        catch ME
+            fprintf('Error in sample (%d, %d): %s\n', ii, jj, ME.message);
+        end
+    end
+end    
+set(0, 'DefaultFigureVisible', 'on');
+
+% Calculate mean and sigma, do plots in terms of the design parameters (i.e., Sweep angle and Mach number); some values removed due to physical model code failures
+mean_surrogate_custom_swept_wing_uncertain_price = nan(length(sa_custom_swept_wing_uncertain_price)-1, length(mach_custom_swept_wing_uncertain_price)-1);
+std_surrogate_custom_swept_wing_uncertain_price = nan(length(sa_custom_swept_wing_uncertain_price)-1, length(mach_custom_swept_wing_uncertain_price)-1);
+for ii = 1:length(sa_custom_swept_wing_uncertain_price)-1
+    for jj = 2:length(mach_custom_swept_wing_uncertain_price)
+        try
+            plotsfolderName = 'custom_swept_wing_uncertain_price_optimisation_uq'; 
+            subfolder_plotsfolderName = sprintf('sa_%u_mach_%u', ii, jj); % each 'case' refers to one fixed combination of design variables
+            fullPath = fullfile(plotsfolderName, subfolder_plotsfolderName);
+            addpath(fullPath);
+            surrogate_custom_swept_wing_uncertain_price = load(sprintf('surrogate_total_operating_cost_sa_case_%u_mach_case_%u.mat', ii, jj));
+            surrogate_custom_swept_wing_uncertain_price = surrogate_custom_swept_wing_uncertain_price.elementToSave;
+
+            N_MC_test = 10^6;
+            inputs_for_mean_sigma_test_custom_swept_wing_uncertain_price = uq_getSample(myInput_custom_swept_wing_uncertain_price, N_MC_test, 'MC');      % generate N_MC Monte Carlo points in the uncertain variables' space
+            outputs_for_mean_sigma_test_custom_swept_wing_uncertain_price = uq_evalModel(surrogate_custom_swept_wing_uncertain_price, inputs_for_mean_sigma_test_custom_swept_wing_uncertain_price);   % evaluate the surrogates to get QIs data
+            mean_surrogate_custom_swept_wing_uncertain_price(ii, jj-1) = mean(outputs_for_mean_sigma_test_custom_swept_wing_uncertain_price, 1);
+            std_surrogate_custom_swept_wing_uncertain_price(ii, jj-1) = std(outputs_for_mean_sigma_test_custom_swept_wing_uncertain_price, 1);
+        catch ME
+            fprintf('Error in sample (%d, %d): %s\n', ii, jj, ME.message);
+        end
+    end
+end 
+
+% plot
+[x_custom_swept_wing_uncertain_price, y_custom_swept_wing_uncertain_price] = meshgrid(linspace(0.5, 0.9, 9), linspace(0, 40, 9)); % x: Mach number, y: Sweep angle
+% Finer grid for interpolation
+[xq_custom_swept_wing_uncertain_price, yq_custom_swept_wing_uncertain_price] = meshgrid(linspace(0.5, 0.9, 100), linspace(0, 40, 100));
+% Interpolate for sigma using bicubic interpolation
+Std_custom_swept_wing_uncertain_price = interp2(x_custom_swept_wing_uncertain_price, y_custom_swept_wing_uncertain_price, std_surrogate_custom_swept_wing_uncertain_price, xq_custom_swept_wing_uncertain_price, yq_custom_swept_wing_uncertain_price, 'cubic');
+
+fig = figure();
+imagesc([0.5 0.9], [0 40], Std_custom_swept_wing_uncertain_price);
+set(gca, 'YDir', 'normal');  % Ensures y-axis is not flipped
+axis tight;                  % Fits the image to data
+colorbar;
+title(sprintf('Sigma estimation (%s): Total operating cost', surrogate_custom_swept_wing_uncertain_price.Options.MetaType)); 
+xlabel('Mach number'); 
+ylabel('Sweep angle'); 
+hold on;
+% Overlay contour lines and labels
+[contourMatrix, contourHandle] = contour(xq_custom_swept_wing_uncertain_price, yq_custom_swept_wing_uncertain_price, Std_custom_swept_wing_uncertain_price, 18, 'LineColor', 'k');
+clabel(contourMatrix, contourHandle, 'FontSize', 8, 'Color', 'k');
+saveas(fig, fullfile(plotsfolderName, 'Sigma_cost_for_sa_and_mach_with_custom_swept_wing_uncertain_price.png'))
+saveas(fig, fullfile(plotsfolderName, 'Sigma_cost_for_sa_and_mach_with_custom_swept_wing_uncertain_price.fig'))
+
+
+% Interpolate for mean using bicubic interpolation
+Mean_custom_swept_wing_uncertain_price = interp2(x_custom_swept_wing_uncertain_price, y_custom_swept_wing_uncertain_price, mean_surrogate_custom_swept_wing_uncertain_price, xq_custom_swept_wing_uncertain_price, yq_custom_swept_wing_uncertain_price, 'cubic');
+
+fig = figure();
+imagesc([0.5 0.9], [0 40], Mean_custom_swept_wing_uncertain_price);
+set(gca, 'YDir', 'normal');  % Ensures y-axis is not flipped
+axis tight;                  % Fits the image to data
+colorbar;
+title(sprintf('Mean estimation (%s): Total operating cost', surrogate_custom_swept_wing_uncertain_price.Options.MetaType));
+xlabel('Mach number');
+ylabel('Sweep angle');
+hold on;
+% Overlay contour lines and labels
+[contourMatrix, contourHandle] = contour(xq_custom_swept_wing_uncertain_price, yq_custom_swept_wing_uncertain_price, Mean_custom_swept_wing_uncertain_price, 18, 'LineColor', 'k');
+clabel(contourMatrix, contourHandle, 'FontSize', 8, 'Color', 'k');
+saveas(fig, fullfile(plotsfolderName, 'Mean_cost_for_sa_and_mach_with_custom_swept_wing_uncertain_price.png'))
+saveas(fig, fullfile(plotsfolderName, 'Mean_cost_for_sa_and_mach_with_custom_swept_wing_uncertain_price.fig'))
+
+F_mean = griddedInterpolant(x_custom_swept_wing_uncertain_price', y_custom_swept_wing_uncertain_price', mean_surrogate_custom_swept_wing_uncertain_price', 'cubic');  
+F_sigma = griddedInterpolant(x_custom_swept_wing_uncertain_price', y_custom_swept_wing_uncertain_price', std_surrogate_custom_swept_wing_uncertain_price', 'cubic');  
+
+% robust optimisation (minimise mean and sigma) using the interpolant surrogates
+custom_swept_nvars_uncertain_price = 2;            % Number of design variables
+custom_swept_lb_uncertain_price = [0, 0.5];        % Lower bounds
+custom_swept_ub_uncertain_price = [40, 0.9];       % Upper bounds
+custom_swept_objFun_uncertain_price = @(x) myObjectives_robust(x, F_mean, F_sigma);
+
+custom_swept_options_uncertain_price = optimoptions('gamultiobj', 'Display', 'iter', 'PlotFcn', @gaplotpareto);     % Genetic Algorithm for multi-objective optimisation
+[custom_swept_wing_pareto_uncertain_price, custom_swept_fval_uncertain_price] = gamultiobj(custom_swept_objFun_uncertain_price, custom_swept_nvars_uncertain_price, [], [], [], [], custom_swept_lb_uncertain_price, custom_swept_ub_uncertain_price, custom_swept_options_uncertain_price);
+custom_swept_pareto_uncertain_price_size = size(custom_swept_wing_pareto_uncertain_price, 1);
+
+for ii=1:custom_swept_pareto_uncertain_price_size
+    try
+        % Description of the physical model for UQLab
+        ModelOpts_custom_swept_wing_uncertain_price.mFile = 'physical_model_indep_sweep_uncertain_fuel_price';
+        ModelOpts_custom_swept_wing_uncertain_price.isVectorized = false;
+        ModelOpts_custom_swept_wing_uncertain_price.Parameters = [custom_swept_wing_pareto_uncertain_price(ii, 1) custom_swept_wing_pareto_uncertain_price(ii, 2)];
+        myModel_custom_swept_wing_uncertain_price = uq_createModel(ModelOpts_custom_swept_wing_uncertain_price);
+
+        N_train = 5;                                     % initial training set size (the set will be updated until the surrogate validation error is low enough)
+        MetaOpts_custom_swept_wing_uncertain_price.Type = 'Metamodel';             % 'metamodel': another word for 'surrogate'
+        % MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'Kriging';      
+        MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'PCE';
+        MetaOpts_custom_swept_wing_uncertain_price.Input = myInput_custom_swept_wing_uncertain_price;        % probability distribution for the uncertain variables
+        MetaOpts_custom_swept_wing_uncertain_price.FullModel = myModel_custom_swept_wing_uncertain_price;    % the physical model as a UQLab object
+        MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.NSamples = N_train;   % 'experimental design' (ExpDesign): another word for 'training set'
+        if strcmp(MetaOpts_custom_swept_wing_uncertain_price.MetaType, 'Kriging')
+            MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.Sampling = 'User';
+        end
+
+        flag_parfor = true;             % can we run the physical model in parallel to build the training set? (True/False)
+        seed = 100;                     % seed for reproducibility due to randomness in sampling the training set
+        N_train_increment = 5;          % we will increment the training set size until we reach convergence
+        N_train_max = 5;                % training budget (i.e., maximum number of training points allowed)
+        % run a test to check if surrogates are actually faster than classical MC for mean and sigma estimation  
+        % recommended only for cheap models (to find the true mean and sigma, we need a large MC with the physical model) 
+        flag_test_for_mean_and_sigma = false;
+
+        % Plots generator for parameter sweeps for the uncertain variables
+        inputs_name_custom_swept_wing_uncertain_price = ["Fuel price", "Oil price"];  % list of the names of the uncertain variables
+        outputs_name_custom_swept_wing_uncertain_price = ["Total operating cost"];    % list of the names of the QIs
+        N_outputs_custom_swept_wing_uncertain_price = length(outputs_name_custom_swept_wing_uncertain_price);           % number of quantities of interest (QIs)
+        descriptive_title_for_plots_custom_swept_wing_uncertain_price = sprintf('%s surrogate (Sweep angle:%.2e, Mach:%.2e)', MetaOpts_custom_swept_wing_uncertain_price.MetaType, custom_swept_wing_pareto_uncertain_price(ii, 1), custom_swept_wing_pareto_uncertain_price(ii, 2));
+        N_eval = 100;                                                        % number of discretisation points for each uncertain variable (for plots)
+        plotsfolderName = 'custom_swept_wing_uncertain_price_optimisation_uq'; 
+        subfolder_plotsfolderName = sprintf('Pareto_point_number_%u', ii); 
+        fullPath = fullfile(plotsfolderName, subfolder_plotsfolderName);
+        mkdir(fullPath);
+        mkdir(fullPath, 'plots_uq');
+        true_model_pareto_custom_swept_wing_uncertain_price{ii, 1} =  surrogates_uq(MetaOpts_custom_swept_wing_uncertain_price, N_outputs_custom_swept_wing_uncertain_price, N_train_increment, N_train_max, flag_parfor, seed, fullPath, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+        elementToSave = true_model_pareto_custom_swept_wing_uncertain_price{ii, 1}; 
+        save(fullfile(fullPath, sprintf('true_model_total_operating_cost_pareto_point_number_%u.mat', ii)), 'elementToSave'); % save the surrogate
+        uncertain_variables_exploration(elementToSave, inputs_name_custom_swept_wing_uncertain_price, outputs_name_custom_swept_wing_uncertain_price, descriptive_title_for_plots_custom_swept_wing_uncertain_price, N_eval, seed, fullPath); % plots generator using the surrogates 
+
+        fileID = fopen(fullfile(fullPath, 'readme.txt'), 'w');
+        fprintf(fileID, 'Surrogates for each quantity of interest (QI) as a function of the uncertain variables (the deterministic variables are fixed).\n\n');
+        fprintf(fileID, 'Legend:\n');
+        N_outputs_custom_swept_wing_uncertain_price = length(outputs_name_custom_swept_wing_uncertain_price);             % number of quantities of interest (QIs)
+        N_variables_custom_swept_wing_uncertain_price = length(inputs_name_custom_swept_wing_uncertain_price);            % number of uncertain variables
+        for kk = 1:N_outputs_custom_swept_wing_uncertain_price
+            fprintf(fileID, 'QI %d: %s\n', kk, outputs_name_custom_swept_wing_uncertain_price(kk));
+        end   
+        for kk = 1:N_variables_custom_swept_wing_uncertain_price
+            fprintf(fileID, 'Uncertain variable %d: %s\n', kk, inputs_name_custom_swept_wing_uncertain_price(kk));
+        end    
+        fprintf(fileID, 'Deterministic variable 1: Sweep angle; Pareto point number: %d; Value: %.5f\n', ii, custom_swept_wing_pareto_uncertain_price(ii, 1));
+        fprintf(fileID, 'Deterministic variable 2: Mach number; Pareto point number: %d; Value: %.5f\n', ii, custom_swept_wing_pareto_uncertain_price(ii, 2));
+        fprintf(fileID, 'Methodology: %s\n\n', descriptive_title_for_plots_custom_swept_wing_uncertain_price);
+        fprintf(fileID, 'The trained surrogates and most of the design exploration figures are stored externally due to size limits.\n'); 
+        fclose(fileID);
+        disp('Readme file for the surrogates has been created successfully.');
+    catch ME
+        fprintf('Error in sample %d: %s\n', ii, ME.message);
+    end
+end    
+
+true_model_custom_swept_output_pareto_uncertain_price = nan(custom_swept_pareto_uncertain_price_size, 2);
+% Calculate mean and sigma at the Pareto points using the surrogates trained on the physical model (rather than the fast cubic interpolation method above)
+for ii = 1:custom_swept_pareto_uncertain_price_size
+    try
+        plotsfolderName = 'custom_swept_wing_uncertain_price_optimisation_uq'; 
+        subfolder_plotsfolderName = sprintf('Pareto_point_number_%u', ii); 
+        fullPath = fullfile(plotsfolderName, subfolder_plotsfolderName);
+        addpath(fullPath);
+        surrogate_custom_swept_wing_uncertain_price = load(sprintf('true_model_total_operating_cost_pareto_point_number_%u.mat', ii));
+        surrogate_custom_swept_wing_uncertain_price = surrogate_custom_swept_wing_uncertain_price.elementToSave;
+
+        N_MC_test = 10^6;
+        inputs_for_mean_sigma_test_custom_swept_wing_uncertain_price = uq_getSample(myInput_custom_swept_wing_uncertain_price, N_MC_test, 'MC');      % generate N_MC Monte Carlo points in the uncertain variables' space
+        outputs_for_mean_sigma_test_custom_swept_wing_uncertain_price = uq_evalModel(surrogate_custom_swept_wing_uncertain_price, inputs_for_mean_sigma_test_custom_swept_wing_uncertain_price);   % evaluate the surrogates to get QIs data
+        true_model_custom_swept_output_pareto_uncertain_price(ii, 1) = mean(outputs_for_mean_sigma_test_custom_swept_wing_uncertain_price, 1);
+        true_model_custom_swept_output_pareto_uncertain_price(ii, 2) = std(outputs_for_mean_sigma_test_custom_swept_wing_uncertain_price, 1);
+    catch ME
+        fprintf('Error in sample %d: %s\n', ii, ME.message);
+    end
+end 
+
+custom_swept_wing_pareto_uncertain_price = custom_swept_wing_pareto_uncertain_price(~any(isnan(true_model_custom_swept_output_pareto_uncertain_price), 2), :);                           
+true_model_custom_swept_output_pareto_uncertain_price = true_model_custom_swept_output_pareto_uncertain_price(~any(isnan(true_model_custom_swept_output_pareto_uncertain_price), 2), :); 
+
+for ii = 1:size(custom_swept_wing_pareto_uncertain_price, 1)
+    F_mean_tmp = F_mean(custom_swept_wing_pareto_uncertain_price(ii, 2), custom_swept_wing_pareto_uncertain_price(ii, 1));
+    F_sigma_tmp = F_sigma(custom_swept_wing_pareto_uncertain_price(ii, 2), custom_swept_wing_pareto_uncertain_price(ii, 1));
+    surrogate_output_custom_swept_pareto_uncertain_price_interp(ii, :) = [F_mean_tmp, F_sigma_tmp];
+    relative_interp_error_custom_swept_uncertain_price_mean(ii) = abs(surrogate_output_custom_swept_pareto_uncertain_price_interp(ii, 1)/true_model_custom_swept_output_pareto_uncertain_price(ii, 1)-1);
+    relative_interp_error_custom_swept_uncertain_price_sigma(ii) = abs(surrogate_output_custom_swept_pareto_uncertain_price_interp(ii, 2)/true_model_custom_swept_output_pareto_uncertain_price(ii, 2)-1);
+end
+% 
+save(fullfile(plotsfolderName, 'opt_for_mean_and_sigma_with_custom_swept_wing_uncertain_price.mat'), 'custom_swept_wing_pareto_uncertain_price', 'true_model_custom_swept_output_pareto_uncertain_price', 'relative_interp_error_custom_swept_uncertain_price_mean', 'relative_interp_error_custom_swept_uncertain_price_sigma')
+% 
+true_model_custom_swept_sorted_points = sortrows(true_model_custom_swept_output_pareto_uncertain_price, 1);
+surrogate_custom_swept_pareto_uncertain_price_sorted_points = sortrows(surrogate_output_custom_swept_pareto_uncertain_price_interp, 1);
+
+fig = figure();
+plot(true_model_custom_swept_sorted_points(:,1), true_model_custom_swept_sorted_points(:,2), 'o-', 'LineWidth', 2, 'DisplayName', 'Physical Model');
+hold on 
+plot(surrogate_custom_swept_pareto_uncertain_price_sorted_points(:,1), surrogate_custom_swept_pareto_uncertain_price_sorted_points(:,2), 'o-', 'LineWidth', 2, 'DisplayName', 'Surrogate Model');
+xlabel('Total operating cost (mean)');
+ylabel('Total operating cost (sigma)');
+title('Pareto (Genetic Algorithm; uncertain fuel price)');
+grid on;
+legend('Location', 'best');
+saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_mean_and_sigma_with_custom_swept_wing_uncertain_price.png'))
+saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_mean_and_sigma_with_custom_swept_wing_uncertain_price.fig'))
+
 %%
 function f = myObjectives(x, surrogates_bf_doc)
     f_val = uq_evalModel(surrogates_bf_doc, x);  
