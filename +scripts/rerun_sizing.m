@@ -1,8 +1,8 @@
 %% ========================= Set Hyper-parameters =========================
 load('example_data/UB321_simple.mat')
 ADP.IsSweepDependent = true;
-ADP.LoadsSurrogateType = "Enforced";
-% ADP.LoadsSurrogateType = "Nastran";
+% ADP.LoadsSurrogateType = "Enforced";
+ADP.LoadsSurrogateType = "Nastran";
 ADP.WingIndependentVar = "AR";
 ADP.isWingAreaFixed = false;
 

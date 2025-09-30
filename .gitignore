@@ -1,4 +1,6 @@
 ################################## MATLAB #################################
+*.zip
+*.bat
 # Windows default autosave extension
 *.asv
 

@@ -7,6 +7,7 @@ arguments
     opts.NumAttempts = 3
     opts.Silent = true;
     opts.TruelySilent = false;
+    opts.DBALL = false;
     solOpts.g = obj.g;
     solOpts.GravVector = obj.GravVector;
 
@@ -37,7 +38,12 @@ sol.LoadFactor = LoadFactor;
 sol.UpdateID(IDs);
 
 %% run Nastran
+if opts.DBALL
+    cmdLineArgs = struct('scr','no');
+else
+    cmdLineArgs = struct();
+end
 binFolder = sol.run(obj.fe,Silent=opts.Silent,NumAttempts=opts.NumAttempts,...
-    BinFolder=obj.BinFolder,TruelySilent=opts.TruelySilent);
+    BinFolder=obj.BinFolder,TruelySilent=opts.TruelySilent,cmdLineArgs=cmdLineArgs);
 end
 
