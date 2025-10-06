@@ -7,7 +7,7 @@ runs = fh.combvec(Sweep,HingeEtas,ARs);
 util.notify("Info",'Param Sweep Started','fintan.healy@bristol.ac.uk')
 data = {};
 for i = 1:size(runs,1)
-    fh.printing.title(sprintf('Run %.0f of %.0f,AR %.0f, Sweep %.1f, Eta %.1f',i,size(runs,1),runs(i,3),runs(i,1),runs(i,2)));
+    ads.Log.info(sprintf('Run %.0f of %.0f,AR %.0f, Sweep %.1f, Eta %.1f',i,size(runs,1),runs(i,3),runs(i,1),runs(i,2)));
     try
         %% Size using Enforced Stuff
         load('example_data\A220_simple.mat')
@@ -21,7 +21,7 @@ for i = 1:size(runs,1)
         ADP.BuildBaff;
         % ============================ Re-run Sizing =============================
         % conduct sizing
-        ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
+        ads.Log.info('Example Surrogates',"$")
         SubHarmonic = [0.8,3000./cast.SI.Nmile];
         sizeOpts = util.SizingOpts(IncludeGusts=false,...
             IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);

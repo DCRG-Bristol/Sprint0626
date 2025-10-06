@@ -4,7 +4,7 @@ load('example_data\A220_simple.mat')
 % ========================= Set Hyper-parameters =========================
 load("+globalOpt\Trainingset_500.mat")
 idx = find(TrainingSet(:,end)==0 | isnan(TrainingSet(:,end)))';
-ads.util.printing.title(sprintf('%.0f Errors',length(idx)))
+ads.Log.info(sprintf('%.0f Errors',length(idx)))
 ii = idx(3);
 % idx =2;
 disp(TrainingSet(ii,:))
@@ -27,7 +27,7 @@ sizeSample(input,true,true)
 
 %% ======================== Get Mission Fuel Burn =========================
 % [~,~,trip_fuel,trip_time] = ADP.MJperPAX(3000./cast.SI.Nmile,1);
-% fh.printing.title('','Length',60,'Symbol','=')
-% fh.printing.title(sprintf('Trip Fuel: %.3f t',trip_fuel./1e3),'Length',60,'Symbol','=')
-% fh.printing.title(sprintf('Trip Time: %.0f t',trip_time),'Length',60,'Symbol','=')
-% fh.printing.title(sprintf('MTOM: %.2f t',ADP.MTOM),'Length',60,'Symbol','=')
+% ads.Log.info('')
+% ads.Log.info(sprintf('Trip Fuel: %.3f t',trip_fuel./1e3))
+% ads.Log.info(sprintf('Trip Time: %.0f t',trip_time))
+% ads.Log.info(sprintf('MTOM: %.2f t',ADP.MTOM))

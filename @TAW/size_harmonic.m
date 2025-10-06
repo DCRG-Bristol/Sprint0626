@@ -19,16 +19,12 @@ for i = 1:50
     res(i).Y = delta;
 
     if abs(delta)<1
-        if opts.Verbose
-            ads.util.printing.title(sprintf('Harmonic Loop completed on iter %.0f: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol=' ');
-        end
+        ads.Log.trace(sprintf('Harmonic Loop completed on iter %.0f: MTOM %.0f kg',i,obj.MTOM)," ");
         return
     elseif i>1 && abs(res(i).Y) > abs(res(i-1).Y)
         % not converging
         if warningFlag
-            if opts.Verbose
-                ads.util.printing.title(sprintf('No Harmonic Convergence Continuing Anyway: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol='E');
-            end
+            ads.Log.warn(sprintf('No Harmonic Convergence Continuing Anyway: MTOM %.0f kg',i,obj.MTOM));
             return
         else
             warningFlag = true;
@@ -38,9 +34,7 @@ for i = 1:50
         obj.MTOM = interp1([res(end-1:end).Y],[res(end-1:end).X],0,"linear","extrap");
     end  
 end
-if opts.Verbose
-    ads.util.printing.title(sprintf('No Harmonic Convergence Continuing Anyway: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol='E');
-end
+ads.Log.warn(sprintf('No Harmonic Convergence Continuing Anyway: MTOM %.0f kg',i,obj.MTOM));
 error('No harmonic Convergence - continuing anyway')
 end
 

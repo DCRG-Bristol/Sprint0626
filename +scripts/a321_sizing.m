@@ -57,18 +57,18 @@ val = @(x) 1.1166 - 0.0516*log(x)+(ADP.ADR.Payload+ADP.ADR.CrewMass)/x-EWF; % fr
 ADP.MTOM = fminsearch(@(x)val(x)^2,0);
 ADP = ADP.MissionAnalysis(OverideLD=false);
 
-fprintf('\n\n%.0f kg\n',ADP.MTOM);
-fprintf('Block Fuel: %.1f Tn\n',(1-prod(fs))*93.5);
-fprintf('Trip Fuel: %.1f Tn\n',(1-prod(fs([1:5,10,11])))*93.5);
+ads.Log.debug(sprintf('MTOM: %.2f t',ADP.MTOM*1e-3));
+ads.Log.debug(sprintf('Block Fuel: %.2f t',(1-prod(fs))*93.5*1e-3));
+ads.Log.debug(sprintf('Trip Fuel: %.2f t',(1-prod(fs([1:5,10,11])))*93.5*1e-3));
 
 %% sizing Mano
 res = [];
 % now size with DLM for manouevres only
-ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
+ads.Log.info('Example Surrogates',"$")
 sizeOpts = util.SizingOpts(IncludeGusts=false,IncludeTurb=false,BinFolder=bin_folder);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts);
 % get data during cruise
-fh.printing.title('Get Cruise Loads','Length',60)
+ads.Log.info('Get Cruise Loads');
 [~,Lds_c]=ADP.StructuralSizing(LoadCaseFactory.GetCases(ADP,sizeOpts,"Cruise"),sizeOpts);
 Lds = Lds | Lds_c;
 %save data

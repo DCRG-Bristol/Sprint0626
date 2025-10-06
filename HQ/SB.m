@@ -146,13 +146,13 @@ classdef SB < handle
 
         function obj = Run_sizing(obj)
 
-            ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
+            ads.Log.info('Example Surrogates',"$")
             SubHarmonic = [0.8,3000./cast.SI.Nmile];
             sizeOpts = util.SizingOpts(IncludeGusts=false,...
                 IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
             [obj.ADP_model,res_mtom,Lds,time,isError,Cases] = obj.ADP_model.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
             % get data during cruise
-            fh.printing.title('Get Cruise Loads','Length',60)
+            ads.Log.info('Get Cruise Loads');
             [~,Lds_c]=obj.ADP_model.StructuralSizing(...
                 LoadCaseFactory.GetCases(obj.ADP_model,sizeOpts,"Cruise"),sizeOpts);
             Lds = Lds | Lds_c;

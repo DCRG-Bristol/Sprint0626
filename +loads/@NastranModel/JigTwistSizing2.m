@@ -1,4 +1,4 @@
-function [Lds,BinFolder] = JigTwistSizing(obj,Case,idx,opts,RunOpts)
+function [Lds,BinFolder] = JigTwistSizing2(obj,Case,idx,opts,RunOpts)
 arguments
     obj
     Case cast.LoadCase
@@ -12,11 +12,11 @@ arguments
     RunOpts.NumAttempts = 1
 end
 % get dynamic pressure
-[rho,a,T,P,~,~,~] = ads.util.atmos(convlength(Case.Alt,'ft','m'));
+[rho,a,T,P,~,~,~] = ads.util.atmos(Case.Alt./cast.SI.ft);
 V = a*Case.Mach;
 q = 0.5*rho*V^2;
 
-ads.Log.info('Jig Twist Optimisation','~');
+ads.Log.debug('Jig Twist Optimisation');
 deltas = ones(1,opts.MaxIter+1)*inf;
 
 for i = 1:opts.MaxIter+1
@@ -24,9 +24,28 @@ for i = 1:opts.MaxIter+1
     cellArgs = namedargs2cell(Case.ConfigParams);
     obj.SetConfiguration(cellArgs{:});
     %run Nastran
-    optsCell = namedargs2cell(RunOpts);
-    BinFolder = obj.Sol144(Case.Mach,Case.Alt,Case.LoadFactor,optsCell{:});
-    filename = fullfile(BinFolder,'bin','sol144.h5');
+    if i < 3
+        RunOpts.DBALL = true;
+        optsCell = namedargs2cell(RunOpts);
+        BinFolder = obj.Sol144(Case.Mach,Case.Alt,Case.LoadFactor,optsCell{:});
+        filename = fullfile(BinFolder,'bin','sol144.h5');
+    else
+        % get DMI cards
+        IDs = obj.fe.UpdateIDs();
+        Aeros = obj.fe.AeroSurfaces;
+        angles = Aeros.get_twists();
+        [cl_alpha,c_m] = Aeros.get_correction_factor();
+        [~,idx] = sort([Aeros.ID]);
+        DMI_W2GJ = mni.printing.cards.DMI('W2GJ',deg2rad(angles(:)),2,1,0);
+        DMI_WKK = mni.printing.cards.DMI('WKK',reshape([cl_alpha;c_m],[],1),3,1,0);       
+        %make solver object
+        sol = ads.nast.Sol144();
+        sol.UpdateID(IDs);
+        % run NASTRAN
+        sol.restart(obj.BinFolder,[DMI_W2GJ],NumAttempts=RunOpts.NumAttempts...
+            ,cmdLineArgs=struct('scr','no','dbs','sol144'));
+        filename = fullfile(BinFolder,'bin','restart.h5');
+    end
     %extract trimAoA
     resFile = mni.result.hdf5(filename);
     tRes = resFile.read_trim;
@@ -51,13 +70,18 @@ for i = 1:opts.MaxIter+1
         %get target distribution
         target_lift = A.*gamma_prandtl(eta,obj.PrandtlFactor);
     end
+
     %get delta between two distributions
     delta = target_lift-(Fs);
+    % delta2 = target_lift2 - Fs;
+    % f = figure(112);clf;hold on;plot(eta,delta);plot(eta,delta2)
     % re-nomralised eta so that zero at wing root and 1 at tip
     e_i = ys>=0;
     etas = eta(e_i);
     %convert delta into a required change in angle (assuming a local lift-curve-slope of 2pi)
     delta_angle = rad2deg(delta(e_i)./(q.*chords(e_i)*2*pi));
+    % delta_angle2 = rad2deg(delta(e_i)./(q.*chords(e_i)*2*pi));
+    % f = figure(113);clf;hold on;plot(eta(e_i),delta_angle);plot(eta(e_i),delta_angle2)
     delta_aoa = AoA-opts.TargetAoA;
     deltas(i) = max(abs(delta_angle).*(Fs(e_i)./max(Fs(e_i))));
     if deltas(i)<opts.TargetDelta && delta_aoa<opts.TargetDelta
@@ -70,8 +94,8 @@ for i = 1:opts.MaxIter+1
         ads.Log.warn(sprintf('Warning Jig Twist Max Step Reached! Delta %0.3f deg',deltas(i)));
         error('CAST:SizingError','Jig Twist Sizing did not converge.')
     end
-
     ads.Log.trace(sprintf('Jig Twist Step %.0f. Delta %0.3f deg. AoA %0.2f deg',i,deltas(i),AoA),"~");
+
     if i>1 && abs(deltas(i)-deltas(i-1))<0.05 && abs(delta_aoa)>0.05
         %focus on AoA
         delta_angle = delta_aoa;

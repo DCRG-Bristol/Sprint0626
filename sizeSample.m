@@ -15,13 +15,13 @@ ADP.ADR.M_c = input(4);
 ADP.SweepAngle = input(5);
 %% ============================ Re-run Sizing =============================
 % conduct sizing
-ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
+ads.Log.info('Example Surrogates','Length',60,'Symbol','$')
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
 sizeOpts = util.SizingOpts(IncludeGusts=true,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts,"SizeMethod","SAH");
 % get data during cruise
-fh.printing.title('Get Cruise Loads','Length',60)
+ads.Log.info('Get Cruise Loads')
 [~,Lds_c]=ADP.StructuralSizing(...
     LoadCaseFactory.GetCases(ADP,sizeOpts,"Cruise"),sizeOpts);
 Lds = Lds | Lds_c;
@@ -79,15 +79,15 @@ end
 if printoutput
     %% ======================== Get Mission Fuel Burn =========================
     
-    fh.printing.title('','Length',60,'Symbol','=')
-    fh.printing.title(sprintf('Trip Fuel: %.3f t',trip_fuel./1e3),'Length',60,'Symbol','=')
-    fh.printing.title(sprintf('Block Fuel: %.3f t',block_fuel./1e3),'Length',60,'Symbol','=')
-    fh.printing.title(sprintf('MTOM: %.2f t',ADP.MTOM),'Length',60,'Symbol','=')
+    ads.Log.info('')
+    ads.Log.info(sprintf('Trip Fuel: %.3f t',trip_fuel./1e3))
+    ads.Log.info(sprintf('Block Fuel: %.3f t',block_fuel./1e3))
+    ads.Log.info(sprintf('MTOM: %.2f t',ADP.MTOM))
 
     %% ======================== Get Operating Cost  ===========================
-    fh.printing.title('','Length',60,'Symbol','=')
-    fh.printing.title(sprintf('Operating Cost: %d USD per seat per km',C_ops),'Length',60,'Symbol','=')
-    
+    ads.Log.info(sprintf('Operating Cost: %d USD per seat per km',C_ops))
+    ads.Log.info('')
+
 end
 %% collate outputs
 % cruise condition

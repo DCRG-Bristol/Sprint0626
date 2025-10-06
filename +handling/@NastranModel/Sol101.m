@@ -2,8 +2,6 @@ function binFolder = Sol101(obj,opts,solOpts)
 arguments
     obj
     opts.NumAttempts = 1
-    opts.Silent = true;
-    opts.TruelySilent = false;
     solOpts.g = 9.81;
     solOpts.GravVector = [0 0 1]';
 
@@ -27,7 +25,7 @@ sol.LoadFactor = 1;
 sol.UpdateID(IDs);
 
 %% run Nastran
-binFolder = sol.run(obj.fe,Silent=opts.Silent,NumAttempts=opts.NumAttempts,...
-    BinFolder=obj.BinFolder,TruelySilent=opts.TruelySilent);
+binFolder = sol.build(obj.fe,obj.BinFolder);
+sol.run(binFolder,NumAttempts=opts.NumAttempts,StopOnFatal=false);
 end
 

@@ -3,7 +3,7 @@ arguments
     obj
     Cases (:,1) cast.LoadCase % Load Cases to run
 end
-ads.util.printing.title('Calculating Nastran Loads',Length=60);
+ads.Log.info('Calculating Nastran Loads');
 if obj.UpdateJigTwist
     config = struct();
     config.FuelMass = obj.Taw.MTOM*obj.Taw.Mf_Fuel;
@@ -17,9 +17,7 @@ if obj.UpdateJigTwist
     Cases = [tmpCase;Cases];
 end
 for i = 1:length(Cases)
-    % if ~obj.Silent
-        ads.util.printing.title(sprintf('Running Case %s',Cases(i).Name),Length=60,Symbol='+');
-    % end
+    ads.Log.debug(sprintf('Running Case %s',Cases(i).Name));
     cellArgs = namedargs2cell(Cases(i).ConfigParams);
     obj.SetConfiguration(cellArgs{:});
     if ~ismethod(obj,Cases(i).Type)

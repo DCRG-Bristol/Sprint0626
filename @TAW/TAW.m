@@ -57,6 +57,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         RefMass = nan;
 
         AeroSurrogate api.AbstractPolar = aero.NullPolar();
+        LoadsSurrogateType string {mustBeMember(LoadsSurrogateType,["Enforced","Nastran"])} = "Enforced"
     end
 
     properties % wing sweep control

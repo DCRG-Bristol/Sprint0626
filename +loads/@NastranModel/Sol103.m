@@ -2,8 +2,6 @@ function [res,binFolder] = Sol103(obj,opts)
 arguments
     obj
     opts.NumAttempts = 1
-    opts.Silent = true;
-    opts.TruelySilent = false;
 end
 %% get info for flight condtion
 % update FE Model
@@ -23,6 +21,7 @@ sol.CoM = obj.fe.Constraints(idx_CoM);
 sol.UpdateID(IDs);
 
 %% run Nastran
-[res,binFolder] = sol.run(obj.fe,Silent=opts.Silent,NumAttempts=opts.NumAttempts,...
-    BinFolder=obj.BinFolder);
+binFolder = sol.build(obj.fe,obj.BinFolder);
+sol.run(binFolder,NumAttempts=opts.NumAttempts,StopOnFatal=false);
+res = sol.ExtractResults(binFolder);
 end

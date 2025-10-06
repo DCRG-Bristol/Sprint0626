@@ -69,8 +69,6 @@ classdef SizingOpts < cast.nast.Opts
                 opts.NGoldenSection = obj.NGoldenSection;
                 opts.CleanUp = obj.CleanUp;
                 opts.BinFolder = obj.BinFolder;
-                opts.Verbose = obj.Verbose;
-                opts.Silent = obj.Silent;
             end
             newObj = obj;
             newObj.DisableTanks = opts.DisableTanks;
@@ -93,8 +91,6 @@ classdef SizingOpts < cast.nast.Opts
             newObj.NGoldenSection = opts.NGoldenSection;
             newObj.CleanUp = opts.CleanUp;
             newObj.BinFolder = opts.BinFolder;
-            newObj.Verbose = opts.Verbose;
-            newObj.Silent = opts.Silent;
         end
         function obj = SizingOpts(opts)
             arguments
@@ -118,8 +114,6 @@ classdef SizingOpts < cast.nast.Opts
                 opts.SubHarmonic = [nan,nan];
                 opts.CleanUp = true;
                 opts.BinFolder ='';
-                opts.Verbose = false;
-                opts.Silent = false;
             end
             obj.DisableTanks  = opts.DisableTanks;
             obj.PayloadFraction = opts.PayloadFraction;
@@ -141,8 +135,6 @@ classdef SizingOpts < cast.nast.Opts
             obj.SubHarmonic = opts.SubHarmonic;
             obj.CleanUp = opts.CleanUp ;
             obj.BinFolder = opts.BinFolder;
-            obj.Verbose = opts.Verbose;
-            obj.Silent = opts.Silent;
         end
     end
 end

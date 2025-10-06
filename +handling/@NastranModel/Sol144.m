@@ -5,8 +5,6 @@ arguments
     alt double  % Altitude in ft
     LoadFactor double % Load Factor
     opts.NumAttempts = 1
-    opts.Silent = true;
-    opts.TruelySilent = false;
     solOpts.g = obj.g;
     solOpts.GravVector = obj.GravVector;
     solOpts.aoa = 0;
@@ -43,7 +41,8 @@ sol.LoadFactor = LoadFactor;
 sol.UpdateID(IDs);
 
 %% run Nastran
-binFolder = sol.run(obj.fe,Silent=opts.Silent,NumAttempts=opts.NumAttempts,...
-    BinFolder=obj.BinFolder,TruelySilent=opts.TruelySilent);
+binFolder = sol.build(obj.fe,obj.BinFolder);
+sol.run(binFolder,NumAttempts=opts.NumAttempts,StopOnFatal=false);
+
 end
 
