@@ -21,7 +21,7 @@ for i = 1:size(runs,1)
         ADP.BuildBaff;
         % ============================ Re-run Sizing =============================
         % conduct sizing
-        ads.Log.info('Example Surrogates',"$")
+        ads.Log.info('Example Surrogates',"high")
         SubHarmonic = [0.8,3000./cast.SI.Nmile];
         sizeOpts = util.SizingOpts(IncludeGusts=false,...
             IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);

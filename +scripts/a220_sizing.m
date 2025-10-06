@@ -3,7 +3,7 @@ fclose all;
 close all;
 cruise_alt = 34e3./cast.SI.ft;
 alternate_dist = 325e3;
-ads.Log.setLevel("Info");
+ads.Log.setLevel("debug");
 bin_folder = 'bin_a220_ja1';
 %% load A321
 % set parameters
@@ -64,7 +64,7 @@ ads.Log.debug(sprintf('Trip Fuel: %.2f t',(1-prod(fs([1:5,10,11])))*93.5*1e-3));
 %% sizing Mano
 res = [];
 % now size with DLM for manouevres only
-ads.Log.info('Example Surrogates',"$")
+ads.Log.info('Example Surrogates',"high")
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
 sizeOpts = util.SizingOpts(IncludeGusts=false,IncludeTurb=false,BinFolder=bin_folder,SubHarmonic=SubHarmonic);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts);

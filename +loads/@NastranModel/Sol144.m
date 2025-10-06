@@ -35,6 +35,8 @@ sol.Grav_Vector = solOpts.GravVector;
 sol.LoadFactor = LoadFactor;
 sol.UpdateID(IDs);
 
+sol.Outputs(end+1) = ads.nast.OutRequest('FORCE');
+
 %% run Nastran
 if opts.DBALL
     cmdLineArgs = struct('scr','no');

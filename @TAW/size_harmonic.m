@@ -19,7 +19,7 @@ for i = 1:50
     res(i).Y = delta;
 
     if abs(delta)<1
-        ads.Log.trace(sprintf('Harmonic Loop completed on iter %.0f: MTOM %.0f kg',i,obj.MTOM)," ");
+        ads.Log.trace(sprintf('Harmonic Loop completed on iter %.0f: MTOM %.0f kg',i,obj.MTOM));
         return
     elseif i>1 && abs(res(i).Y) > abs(res(i-1).Y)
         % not converging

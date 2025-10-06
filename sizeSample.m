@@ -15,7 +15,7 @@ ADP.ADR.M_c = input(4);
 ADP.SweepAngle = input(5);
 %% ============================ Re-run Sizing =============================
 % conduct sizing
-ads.Log.info('Example Surrogates','Length',60,'Symbol','$')
+ads.Log.info('Example Surrogates',"high")
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
 sizeOpts = util.SizingOpts(IncludeGusts=true,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);

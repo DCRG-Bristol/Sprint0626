@@ -78,10 +78,10 @@ for i = 1:opts.MaxIter+1
     delta_aoa = AoA-opts.TargetAoA;
     deltas(i) = max(abs(delta_angle).*(Fs(e_i)./max(Fs(e_i))));
     if deltas(i)<opts.TargetDelta && delta_aoa<opts.TargetDelta
-        ads.Log.debug(sprintf('Jig Twist Complete! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA));
+        ads.Log.debug(sprintf('Jig Twist Complete! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),'low');
         break
     elseif i>1 && delta_aoa<opts.TargetDelta && abs(deltas(i)-deltas(i-1))<opts.TargetDelta/2 %close enough
-        ads.Log.debug(sprintf('Jig Twist Converged! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA));
+        ads.Log.debug(sprintf('Jig Twist Converged! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),'low');
         break
     elseif i == opts.MaxIter+1
         ads.Log.warn(sprintf('Warning Jig Twist Max Step Reached! Delta %0.3f deg',deltas(i)));

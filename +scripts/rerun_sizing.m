@@ -1,6 +1,6 @@
 %% ========================= Set Hyper-parameters =========================
 load('example_data/A220_simple.mat')
-
+ads.Log.setLevel('Debug');
 % ADP.AR = 22;
 % ADP.HingeEta = 1;
 % ADP.FlareAngle = 15;
@@ -19,7 +19,7 @@ axis equal
 
 %% ============================ Re-run Sizing =============================
 % conduct sizing
-ads.Log.info('Example Surrogates',"$")
+ads.Log.info('Example Surrogates',"high")
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
 sizeOpts = util.SizingOpts(IncludeGusts=false,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);

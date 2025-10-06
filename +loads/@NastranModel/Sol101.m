@@ -22,6 +22,7 @@ sol.g = solOpts.g;
 sol.Grav_Vector = solOpts.GravVector;
 sol.LoadFactor = 1;
 sol.UpdateID(IDs);
+sol.Outputs(end+1) = ads.nast.OutRequest('FORCE');
 
 %% run Nastran
 binFolder = sol.build(obj.fe,obj.BinFolder);

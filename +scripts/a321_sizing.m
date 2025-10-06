@@ -64,7 +64,7 @@ ads.Log.debug(sprintf('Trip Fuel: %.2f t',(1-prod(fs([1:5,10,11])))*93.5*1e-3));
 %% sizing Mano
 res = [];
 % now size with DLM for manouevres only
-ads.Log.info('Example Surrogates',"$")
+ads.Log.info('Example Surrogates',"high")
 sizeOpts = util.SizingOpts(IncludeGusts=false,IncludeTurb=false,BinFolder=bin_folder);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts);
 % get data during cruise

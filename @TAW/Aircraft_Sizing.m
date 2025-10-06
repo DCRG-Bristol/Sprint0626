@@ -13,7 +13,7 @@ r_harm = ADP.ADR.Range;
     % tune harmonic
     ADP.size_harmonic(SizingOpts);
     for i = 1:opts.MaxSteps    
-        ads.Log.info(sprintf('iter %.0f: MTOM %.0f kg',i,ADP.MTOM),"#");
+        ads.Log.info(sprintf('iter %.0f: MTOM %.0f kg',i,ADP.MTOM),"high");
         %% run sizing
         mtom = ADP.MTOM;
         if ADP.Size_wing

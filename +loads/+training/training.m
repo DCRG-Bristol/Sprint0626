@@ -42,7 +42,7 @@ for i = 1:nSamples
         ADP.SweepAngle   = X(i,5);
 
         % Aircraft sizing
-        ads.Log.info('Example Surrogates',"$")
+        ads.Log.info('Example Surrogates',"high")
         SubHarmonic = [0.8,3000./cast.SI.Nmile];
         sizeOpts = util.SizingOpts(IncludeGusts=false, IncludeTurb=false, ...
                                     BinFolder='bin_size', SubHarmonic=SubHarmonic);
