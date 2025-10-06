@@ -493,6 +493,8 @@ if N_outputs >= 2
     end    
 end
 
+close all;
+
 %% 12. Write a readme file
 fileID = fopen(fullfile(plotsfolderName, 'plots_uq', 'readme.txt'), 'w');
 fprintf(fileID, 'Plots generated for each quantity of interest (QI) as a function of the uncertain variables.\n\n');

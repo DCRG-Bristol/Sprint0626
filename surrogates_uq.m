@@ -501,6 +501,8 @@ if strcmp(input_distributions.Marginals(1).Type, 'Uniform') % this code works on
     end   
 end
 
+close all;
+
 end
 
 
