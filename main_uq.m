@@ -1655,6 +1655,152 @@ legend('Location', 'best');
 saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_mean_and_sigma_with_custom_swept_wing_uncertain_price.png'))
 saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_mean_and_sigma_with_custom_swept_wing_uncertain_price.fig'))
 
+%% 11. Swept wing case (design variables: Sweep angle, Mach no., AR, HingeEta)
+
+% Description of the uncertain variables for UQLab
+InputOpts_all_custom_swept_wing_fwt.Marginals(1).Type = 'Uniform';
+InputOpts_all_custom_swept_wing_fwt.Marginals(1).Parameters = [0, 45];     % (Sweep angle) lower and upper design optimisation bound
+InputOpts_all_custom_swept_wing_fwt.Marginals(2).Type = 'Uniform';
+InputOpts_all_custom_swept_wing_fwt.Marginals(2).Parameters = [0.45, 0.9]; % (Mach no.) lower and upper design optimisation bound
+InputOpts_all_custom_swept_wing_fwt.Marginals(3).Type = 'Uniform';
+InputOpts_all_custom_swept_wing_fwt.Marginals(3).Parameters = [11, 23];    % (AR) lower and upper design optimisation bound
+InputOpts_all_custom_swept_wing_fwt.Marginals(4).Type = 'Uniform';
+InputOpts_all_custom_swept_wing_fwt.Marginals(4).Parameters = [0.45, 1];   % (HingeEta) lower and upper design optimisation bound
+% The uncertain variables are inputs for physical maps that output QIs (i.e., Block Fuel, DOC, ...)
+myInput_all_custom_swept_wing_fwt = uq_createInput(InputOpts_all_custom_swept_wing_fwt);
+
+% This section generates many plots, which are saved rather than displayed on the screen
+set(0, 'DefaultFigureVisible', 'off');
+
+plotsfolderName = 'indep_sweep_ar_he_wing_uq'; 
+mkdir(plotsfolderName)
+
+% Description of the physical model for UQLab
+ModelOpts_all_custom_swept_wing_fwt.mFile = 'physical_model_indep_sweep_ar_he';
+ModelOpts_all_custom_swept_wing_fwt.isVectorized = false;
+myModel_all_custom_swept_wing_fwt = uq_createModel(ModelOpts_all_custom_swept_wing_fwt);
+
+N_train = 5;    % initial training set size (the set will be updated until the training budget is exhausted or until the surrogate validation error is low enough)
+MetaOpts_all_custom_swept_wing_fwt.Type = 'Metamodel';                                % 'metamodel': another word for 'surrogate'    
+MetaOpts_all_custom_swept_wing_fwt.MetaType = 'Kriging';                              % Kriging surrogate model
+MetaOpts_all_custom_swept_wing_fwt.Input = myInput_all_custom_swept_wing_fwt;         % design variables
+MetaOpts_all_custom_swept_wing_fwt.FullModel = myModel_all_custom_swept_wing_fwt;     % the physical model as a UQLab object
+MetaOpts_all_custom_swept_wing_fwt.ExpDesign.NSamples = N_train;                      % 'experimental design' (ExpDesign): another word for 'training set'
+if strcmp(MetaOpts_all_custom_swept_wing_fwt.MetaType, 'Kriging')
+    MetaOpts_all_custom_swept_wing_fwt.ExpDesign.Sampling = 'User';
+end
+
+flag_parfor = true;             % can we run the physical model in parallel to build the training set? (True/False)
+seed = 100;                     % seed for reproducibility due to randomness in sampling the training set
+N_train_increment = 8;          % we will increment the training set size until we reach convergence
+N_train_max = 2000;             % training budget (i.e., maximum number of training points allowed)
+flag_test_for_mean_and_sigma = false;
+
+% Plots generator for parameter sweeps for the design variables
+inputs_name = ["Sweep angle", "Mach number", "Aspect ratio", "Hinge eta"];  % list of the names of the design variables
+outputs_name = ["Block fuel", "Direct operating cost", "Flightspan", "Groundspan", "CD0", "CD cruise", "MTOM"];   % list of the names of the QIs
+N_outputs = length(outputs_name);                    % number of quantities of interest (QIs)
+descriptive_title_for_plots = sprintf('%s surrogate', MetaOpts_all_custom_swept_wing_fwt.MetaType);
+N_eval = 100;                                        % number of discretisation points for each design variable (for plots)
+plotsfolderName = 'indep_sweep_ar_he_wing_uq'; 
+mkdir(plotsfolderName, 'plots_uq');
+tic;
+surrogates_all_custom_swept_wing_fwt =  surrogates_uq(MetaOpts_all_custom_swept_wing_fwt, N_outputs, N_train_increment, N_train_max, flag_parfor, seed, plotsfolderName, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+totalTime = toc;
+fprintf('Total surrogate building time: %.4f seconds\n', totalTime);
+elementToSave = surrogates_all_custom_swept_wing_fwt;
+save(fullfile(plotsfolderName, 'surrogates_indep_sweep_ar_he_wing.mat'), 'elementToSave'); % save the surrogate
+% visualise the outputs as a function of the design variables (i.e., design exploration)
+tic;
+uncertain_variables_exploration(elementToSave, inputs_name, outputs_name, descriptive_title_for_plots, N_eval, seed, plotsfolderName); % plots generator using the surrogates 
+totalTime = toc;
+fprintf('Total design space exploration time: %.4f seconds\n', totalTime);
+% add readme file
+fileID = fopen(fullfile(plotsfolderName, 'readme.txt'), 'w');
+fprintf(fileID, 'Surrogates for each quantity of interest (QI) as a function of the uncertain variables.\n\n');
+fprintf(fileID, 'Legend:\n');
+N_outputs = length(outputs_name);             % number of quantities of interest (QIs)
+N_variables = length(inputs_name);            % number of uncertain variables
+for kk = 1:N_outputs
+    fprintf(fileID, 'QI %d: %s\n', kk, outputs_name(kk));
+end   
+for kk = 1:N_variables
+    fprintf(fileID, 'Uncertain variable %d: %s\n', kk, inputs_name(kk));
+end    
+fprintf(fileID, 'Methodology: %s\n\n', descriptive_title_for_plots); 
+fprintf(fileID, 'The trained surrogates and most of the design exploration figures are stored externally due to size limits.\n'); 
+fclose(fileID);
+disp('Readme file for the surrogates has been created successfully.');
+
+set(0, 'DefaultFigureVisible', 'on');
+
+% multi-objective optimisation using the surrogates
+all_custom_he_fa_nvars = 4;                  % Number of design variables
+all_custom_he_fa_lb = [0, 0.45, 11, 0.45];      % Lower bounds
+all_custom_he_fa_ub = [45, 0.9, 23, 1];        % Upper bounds
+
+plotsfolderName = 'indep_sweep_ar_he_wing_uq';
+addpath(plotsfolderName);
+surrogates_all_custom_he_fa_bf_doc = load('surrogates_indep_sweep_ar_he_wing.mat');
+surrogates_all_custom_he_fa_bf_doc = surrogates_all_custom_he_fa_bf_doc.elementToSave;
+all_custom_he_fa_objFun = @(x) myObjectives(x, surrogates_all_custom_he_fa_bf_doc);
+
+all_custom_he_fa_options = optimoptions('gamultiobj', 'Display', 'iter', 'PlotFcn', @gaplotpareto);
+[indep_sweep_and_ar_he_fa_wing_pareto, all_custom_he_fa_fval] = gamultiobj(all_custom_he_fa_objFun, all_custom_he_fa_nvars, [], [], [], [], all_custom_he_fa_lb, all_custom_he_fa_ub, all_custom_he_fa_options);
+all_custom_he_fa_pareto_size = size(indep_sweep_and_ar_he_fa_wing_pareto, 1);
+
+true_model_all_custom_he_fa_output_pareto = nan(all_custom_he_fa_pareto_size, N_outputs);     
+if flag_parfor
+    parfor ii=1:all_custom_he_fa_pareto_size
+        try
+            true_model_all_custom_he_fa_output_pareto(ii, :) = uq_evalModel(myModel_all_custom_swept_wing_fwt, indep_sweep_and_ar_he_fa_wing_pareto(ii, :));     % evaluate the physical model on the training inputs
+        catch ME
+            fprintf('Error in sample %d: %s\n', ii, ME.message);
+        end
+    end
+else   
+    for ii=1:all_custom_he_fa_pareto_size
+        try
+            true_model_all_custom_he_fa_output_pareto(ii, :) = uq_evalModel(myModel_all_custom_swept_wing_fwt, indep_sweep_and_ar_he_fa_wing_pareto(ii, :));
+        catch ME
+            fprintf('Error in sample %d: %s\n', ii, ME.message);
+        end
+    end
+end   
+indep_sweep_and_ar_he_fa_wing_pareto = indep_sweep_and_ar_he_fa_wing_pareto(~any(isnan(true_model_all_custom_he_fa_output_pareto), 2), :);                           
+true_model_all_custom_he_fa_output_pareto = true_model_all_custom_he_fa_output_pareto(~any(isnan(true_model_all_custom_he_fa_output_pareto), 2), :); 
+
+surrogate_output_all_custom_he_fa_pareto = uq_evalModel(surrogates_all_custom_he_fa_bf_doc, indep_sweep_and_ar_he_fa_wing_pareto);
+
+for ii = 1:size(indep_sweep_and_ar_he_fa_wing_pareto, 1)
+    relative_surrogate_error_indep_sweep_and_ar_he_fa_bf(ii) = abs(surrogate_output_all_custom_he_fa_pareto(ii, 1)/true_model_all_custom_he_fa_output_pareto(ii, 1)-1);
+    relative_surrogate_error_indep_sweep_and_ar_he_fa_doc(ii) = abs(surrogate_output_all_custom_he_fa_pareto(ii, 2)/true_model_all_custom_he_fa_output_pareto(ii, 2)-1);
+    if relative_surrogate_error_indep_sweep_and_ar_he_fa_doc(ii) >= 0.005 | relative_surrogate_error_indep_sweep_and_ar_he_fa_bf(ii) >= 0.005
+        indep_sweep_and_ar_he_fa_wing_pareto(ii, :) = [];
+        true_model_all_custom_he_fa_output_pareto(ii, :) = [];
+        surrogate_output_all_custom_he_fa_pareto(ii, :) = [];
+        relative_surrogate_error_indep_sweep_and_ar_he_fa_doc(ii) = [];
+        relative_surrogate_error_indep_sweep_and_ar_he_fa_bf(ii) = [];
+    end
+end
+
+save(fullfile(plotsfolderName, 'opt_for_bf_and_doc_with_indep_sweep_he.mat'), 'indep_sweep_and_ar_he_fa_wing_pareto', 'true_model_all_custom_he_fa_output_pareto','relative_surrogate_error_indep_sweep_and_ar_he_fa_bf', 'relative_surrogate_error_indep_sweep_and_ar_he_fa_doc')
+
+true_model_all_custom_he_fa_sorted_points = sortrows(true_model_all_custom_he_fa_output_pareto, 1);
+surrogate_model_all_custom_he_fa_sorted_points = sortrows(surrogate_output_all_custom_he_fa_pareto, 1);
+
+fig = figure();
+plot(true_model_all_custom_he_fa_sorted_points(:,1), true_model_all_custom_he_fa_sorted_points(:,2), 'o-', 'LineWidth', 2, 'DisplayName', 'Physical Model');
+hold on 
+plot(surrogate_model_all_custom_he_fa_sorted_points(:,1), surrogate_model_all_custom_he_fa_sorted_points(:,2), 'o-', 'LineWidth', 2, 'DisplayName', 'Surrogate Model');
+xlabel('Fuel Burn (FB)');
+ylabel('Direct Operating Cost (DOC)');
+title('Pareto Front (Genetic Algorithm with Kriging surrogates)');
+grid on;
+legend();
+saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_bf_and_doc_with_indep_sweep_and_ar_he.png'))
+saveas(fig, fullfile(plotsfolderName, 'Pareto_opt_for_bf_and_doc_with_indep_sweep_and_ar_he.fig'))
+
 %%
 function f = myObjectives(x, surrogates_bf_doc)
     f_val = uq_evalModel(surrogates_bf_doc, x);  
