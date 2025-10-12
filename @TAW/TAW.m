@@ -68,6 +68,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         NoKink = false;
         KinkPos = 5.75;
         EnginePos = 5.5;
+        TaperRatio = 0.35;
     end
 
     properties
