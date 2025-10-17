@@ -1,4 +1,4 @@
-function Y = physical_model_indep_sweep_ar_he_toc(X)
+function Y = physical_model_indep_sweep_ar_he_toc_nastran(X)
 %% Title section - Block fuel (BF) and Direct operating cost (DOC) computations for the swept wing case
 %{
 --------------------------------------------------------
@@ -32,15 +32,15 @@ N_pax = 140; % Number of passengers
 N_eng = 2; % Number of engines
 
 % This function does the sizing for one sample of input parameters
-load('example_data/UB321_simple.mat')
+load('example_data/UB321_simple_nastran_gusts.mat')
 ADP.IsSweepDependent = false;
-ADP.LoadsSurrogateType = "Enforced";
-% ADP.LoadsSurrogateType = "Nastran";
+% ADP.LoadsSurrogateType = "Enforced";
+ADP.LoadsSurrogateType = "Nastran";
 ADP.WingIndependentVar = "AR";
 ADP.isWingAreaFixed = false;
 
 ADP.AR = X(3);
-ADP.HingeEta = X(4);
+ADP.HingeEta = 1;
 ADP.FlareAngle = 15;
 ADP.ADR.M_c = X(2);
 ADP.SweepAngle = X(1);
@@ -54,7 +54,7 @@ ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
 %     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
 
 SubHarmonic = [16/19.28,6000./cast.SI.km];
-sizeOpts = util.SizingOpts(IncludeGusts=false,...
+sizeOpts = util.SizingOpts(IncludeGusts=true,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);
 
 if ADP.HingeEta == 1

@@ -1847,6 +1847,56 @@ saveas(fig, 'Pareto_opt_for_bf_and_toc.fig')
 
 save('bayes_opt_multi_obj_det_opt_for_bf_and_toc.mat', 'bf_multi_obj', 'toc_multi_obj', 'x_opt_multi_obj')
 
+%% 13. Bayesian optimisation - Deterministic multi-objective optimisation with NASTRAN (minimise block fuel and TOC)
+% first, minimise BF and TOC separately
+x1 = optimizableVariable('x1', [0, 45]);      % (Sweep angle) lower and upper design optimisation bound
+x2 = optimizableVariable('x2', [0.45, 0.9]);  % (Mach no.) lower and upper design optimisation bound
+x3 = optimizableVariable('x3', [11, 23]);     % (AR) lower and upper design optimisation bound
+
+% Objective function
+fun_bf = @(x) BayesOptObjective_bf_nastran(x);
+% Solve
+results_bf = bayesopt(fun_bf,[x1,x2,x3],'IsObjectiveDeterministic',true);
+x_opt_bf = results_bf.XAtMinObjective;
+fval_bf = results_bf.MinObjective;
+% Objective function
+fun_toc = @(x) BayesOptObjective_toc_nastran(x);
+% Solve
+results_toc = bayesopt(fun_toc,[x1,x2,x3],'IsObjectiveDeterministic',true);
+x_opt_toc = results_toc.XAtMinObjective;
+fval_toc = results_toc.MinObjective;
+
+fval_toc_max = BayesOptObjective_toc_nastran(x_opt_bf);
+
+% prepare multi-objective
+N_pareto_points = 10;
+multi_obj_toc_threshold = linspace(1.005*fval_toc, 1.005*fval_toc_max, N_pareto_points);
+for ii = 1:N_pareto_points
+    % Objective function
+    fun = @(x) BayesOptMultiObjectiveConstraints_nastran(x, multi_obj_toc_threshold(ii));
+    % Solve
+    results = bayesopt(fun,[x1,x2,x3],'IsObjectiveDeterministic',true,'NumCoupledConstraints',1,'AcquisitionFunctionName','probability-of-improvement');
+    x_opt_multi_obj(ii, :) = results.XAtMinObjective{1,:};
+    bf_multi_obj(ii) = results.MinObjective;
+    toc_multi_obj(ii) = results.ConstraintsTrace(results.IndexOfMinimumTrace(end))+multi_obj_toc_threshold(ii);
+end  
+
+fval_bf_max = BayesOptObjective_bf_nastran(x_opt_toc);
+x_opt_multi_obj(1, :) = x_opt_toc{1, :};
+bf_multi_obj(1) = fval_bf_max;
+toc_multi_obj(1) = fval_toc;
+
+fig = figure();
+plot(toc_multi_obj, bf_multi_obj, 'o-', 'LineWidth', 2);
+xlabel('Direct operating cost');
+ylabel('Block fuel');
+title('Pareto Front (Bayesian optimisation)');
+grid on;
+saveas(fig, 'Pareto_opt_for_bf_and_toc_nastran.png')
+saveas(fig, 'Pareto_opt_for_bf_and_toc_nastran.fig')
+
+save('bayes_opt_multi_obj_det_opt_for_bf_and_toc_nastran.mat', 'bf_multi_obj', 'toc_multi_obj', 'x_opt_multi_obj')
+
 %%
 function f = myObjectives(x, surrogates_bf_doc)
     f_val = uq_evalModel(surrogates_bf_doc, x);  
@@ -1886,6 +1936,42 @@ end
 function [objective, constraint1] = BayesOptMultiObjectiveConstraints(x, multi_obj_toc_threshold)
     % Objective function
     fun = @(x) physical_model_indep_sweep_ar_he(x{1, :});
+    try
+        tmp_output = fun(x);
+        objective = tmp_output(1);
+        constraint1 = tmp_output(2)-multi_obj_toc_threshold;
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        objective = NaN;
+        constraint1 = NaN;
+    end
+end
+
+function objective = BayesOptObjective_bf_nastran(x)
+    % Objective function
+    fun = @(x) physical_model_indep_sweep_ar_he_block_fuel_nastran(x{1, :});
+    try
+        objective = fun(x);
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        objective = NaN;
+    end
+end
+
+function objective = BayesOptObjective_toc_nastran(x)
+    % Objective function
+    fun = @(x) physical_model_indep_sweep_ar_he_toc_nastran(x{1, :});
+    try
+        objective = fun(x);
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        objective = NaN;
+    end
+end
+
+function [objective, constraint1] = BayesOptMultiObjectiveConstraints_nastran(x, multi_obj_toc_threshold)
+    % Objective function
+    fun = @(x) physical_model_indep_sweep_ar_he_nastran(x{1, :});
     try
         tmp_output = fun(x);
         objective = tmp_output(1);
