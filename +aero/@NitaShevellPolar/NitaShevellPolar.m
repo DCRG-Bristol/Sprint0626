@@ -52,7 +52,7 @@ classdef NitaShevellPolar < api.AbstractPolar
 
 
             pLamFuselage = 0.3*34/obj.Taw.Baff.BluffBody(1).EtaLength; % length of laminar flow 30% of a319 and same length on other aircraft
-            [CD0,meta] = cast.drag.baff2CD0(obj.Taw.Baff,obj.Taw.WingArea,obj.Taw.ADR.Alt_cruise,obj.Taw.ADR.M_c,"pLamFuselage",pLamFuselage,"pLamWing",0.25);
+            [CD0,meta] = cast.drag.baff2CD0(obj.Taw.Baff,obj.Taw.WingArea,obj.Taw.ADR.Alt_cruise,obj.Taw.ADR.M_c,"pLamFuselage",pLamFuselage,"pLamWing",0.05);
             obj.CD0_meta_c = [meta,cast.drag.DragMeta("Extra",CD0*opts.ProturbanceDrag)];
             obj.CD0_c = sum([obj.CD0_meta_c.CD0]);
 
@@ -65,14 +65,14 @@ classdef NitaShevellPolar < api.AbstractPolar
             
             %% Take off info
             M_app = obj.Taw.ADR.V_app/340;
-            CD0_to = cast.drag.baff2CD0(obj.Taw.Baff,obj.Taw.WingArea,0,M_app,"pLamFuselage",pLamFuselage,"pLamWing",0.25);
+            CD0_to = cast.drag.baff2CD0(obj.Taw.Baff,obj.Taw.WingArea,0,M_app,"pLamFuselage",pLamFuselage,"pLamWing",0.1);
             obj.CD0_meta_to = [meta,cast.drag.DragMeta("Extra",CD0_to*0.03 + 0.04)]; % 10.2514/1.C036529 (near Eq. 5) + 0.015 fudge factor
             obj.CD0_to = sum([obj.CD0_meta_to.CD0]);
             obj.e_to = obj.EstimateOswald(M_app,"NitaNastran")*K_e-0.05;
 
             % obj.CL_TOmax = 0.9*(obj.Taw.Cl_max+obj.Taw.Delta_Cl_to)*cosd(sweep); % Raymer 12.15
             %% landing
-            CD0_ld = cast.drag.baff2CD0(obj.Taw.Baff,obj.Taw.WingArea,0,obj.Taw.ADR.V_app/340,"pLamFuselage",pLamFuselage,"pLamWing",0.25);
+            CD0_ld = cast.drag.baff2CD0(obj.Taw.Baff,obj.Taw.WingArea,0,obj.Taw.ADR.V_app/340,"pLamFuselage",pLamFuselage,"pLamWing",0.1);
             obj.CD0_ld = CD0_ld + CD0_ld * 0.03 + 0.085; % 10.2514/1.C036529 (near Eq. 5) + 0.015 fudge factor
             obj.e_ld = obj.EstimateOswald(M_app,"NitaNastran")*K_e-0.1;
 

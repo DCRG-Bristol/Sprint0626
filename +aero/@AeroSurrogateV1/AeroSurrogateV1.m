@@ -83,7 +83,7 @@ classdef AeroSurrogateV1 < api.AbstractPolar
             %% Original
 
             pLamFuselage = 0.3*34/obj.Taw.Baff.BluffBody(1).EtaLength; % length of laminar flow 30% of a319 and same length on other aircraft
-            [CD0,meta] = cast.drag.baff2CD0(obj.Taw.Baff,obj.Taw.WingArea,obj.Taw.ADR.Alt_cruise,obj.Taw.ADR.M_c,"pLamFuselage",pLamFuselage,"pLamWing",0.25);
+            [CD0,meta] = cast.drag.baff2CD0(obj.Taw.Baff,obj.Taw.WingArea,obj.Taw.ADR.Alt_cruise,obj.Taw.ADR.M_c,"pLamFuselage",pLamFuselage,"pLamWing",0.15);
             obj.CD0_meta_c = [meta,cast.drag.DragMeta("Extra",CD0*opts.ProturbanceDrag)];
             obj.CD0_c = sum([obj.CD0_meta_c.CD0]);
 

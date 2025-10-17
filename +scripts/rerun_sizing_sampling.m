@@ -5,7 +5,7 @@ N_pax = 140; % Number of passengers
 N_eng = 2; % Number of engines
 
 %% ========================= Set Hyper-parameters =========================
-nSamplesvec = [500];
+nSamplesvec = [5000];
 %nSamplesvec = [1 3 5];
 % type = 'test';
 types = {'training'};
@@ -42,6 +42,7 @@ for i = 1:length(nSamplesvec)
         % for k = 311
         % % sampleOut = sizeSample(inputUnscaled(i,:),saveMat,printoutput);
             try
+                ads.Log.setLevel("Warn");
                 sampleOut = sizeSample(inputUnscaled(k,:),saveMat,printoutput);
                 outArray(k,:) = sampleOut;
             catch ME

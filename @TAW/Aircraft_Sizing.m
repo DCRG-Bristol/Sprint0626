@@ -11,9 +11,10 @@ res_mtom = struct();
 r_harm = ADP.ADR.Range;
 % try
     % tune harmonic
-    ADP.size_harmonic(SizingOpts);
-    for i = 1:opts.MaxSteps    
+    for i = 1:opts.MaxSteps   
         ads.Log.info(sprintf('iter %.0f: MTOM %.0f kg',i,ADP.MTOM),"high");
+        %% tune harmonic
+        ADP.size_harmonic(SizingOpts);
         %% run sizing
         mtom = ADP.MTOM;
         if ADP.Size_wing
@@ -29,16 +30,15 @@ r_harm = ADP.ADR.Range;
         ADP.WingEta = ADP.Baff.Wing(1).Eta;
         ADP.OEM = ADP.Baff.GetOEM();
         ADP.MTOM = ADP.OEM + ADP.ADR.Payload + ADP.MTOM * ADP.Mf_Fuel;
-        %% tune harmonic
-        ADP.size_harmonic(SizingOpts);
+
         %% tune for subharmonic point
         if ~isnan(SizingOpts.SubHarmonic(1))
             ads.Log.debug(sprintf('Subharmonic Loop'));
             % need to adjust Extra Fuel to hit secondary point of payload
             % range diagram
             res_extra = [];
-            for ii = 1:opts.MaxSteps  
-                ADP.size_harmonic(SizingOpts);
+            ADP.size_harmonic(SizingOpts);
+            for ii = 1:opts.MaxSteps             
                 [r,p] = ADP.PR_diagram();
                 r = r./cast.SI.Nmile;
                 idx = ads.util.tern(p(2) == p(3),3,2);
@@ -52,6 +52,7 @@ r_harm = ADP.ADR.Range;
                     break
                 end
                 ADP.ExtraFuel = max(0,cast.util.opt.gd(res_extra,ADP.Mf_Fuel*ADP.MTOM/r(2)*delta,1e3));
+                ADP.size_harmonic(SizingOpts);
             end
             ads.Log.debug(sprintf('Subharmonic Loop Completed on iter %.0f: Extra Fuel %.2f Tn',ii,ADP.ExtraFuel/1e3));
         end
@@ -75,38 +76,27 @@ r_harm = ADP.ADR.Range;
             else
                 isError = false;
             end
-        % elseif abs(delta)>10e3
-        %     ADP.MTOM = mtom + sign(delta)*5e3;
-        % else
-        %     ADP.MTOM = mtom + delta;
-        % elseif i==12 || abs(delta)>abs(res_mtom(end).Bounds(1,2)-res_mtom(end).Bounds(1,1))
-        %     %clean the slate
-        %     save('log.mat','res_mtom')
-        %     util.notify('Info',sprintf('Current Run is taking a long time...%.1f,%.1f',abs(delta),abs(r(2)-r_harm)));
-        %     res_mtom = struct();
-        %     res_mtom = cast.util.opt.dynBoundary(res_mtom,mtom,delta);
-        %     ADP.MTOM = cast.util.opt.gd(res_mtom,1e3,10e3);
+        elseif abs(delta)>=0.618*min(abs([res_mtom.Delta])) || i>6
+            tmp = cast.util.opt.gd(res_mtom,delta,max_step(i));
+            ADP.MTOM = 0.618*(ADP.MTOM-tmp) + tmp;
         else
             ADP.MTOM = cast.util.opt.gd(res_mtom,delta,max_step(i));
         end
         r_harm = r(2);        
         time_size = toc;
     end
-% catch err
-%     switch err.identifier
-%         case {'CAST:SizingError','ADS:Nastran'}
-%             % sizing loop failed return with error flag
-%             % res_mtom = nan;
-%             Lds = cast.size.Loads.empty;
-%             Cases = cast.LoadCase.empty;
-%             time_size = toc;
-%             isError = true;
-%             warning(err.message)
-%         otherwise
-%             rethrow(err)
-%     end
-% end
-
+    % check loads the correct size, if not re-run
+    NLds = arrayfun(@(x)size(x.Mx,2),Lds);
+    NWB = [ADP.WingBoxParams.NumEl];
+    if any(NLds~=NWB)
+        if ADP.Size_wing
+            Cases = LoadCaseFactory.GetCases(ADP,SizingOpts,opts.SizeMethod);
+            [~,Lds,~]=ADP.StructuralSizing(Cases,SizingOpts);
+        else
+            Lds = cast.size.Loads.empty;
+            Cases = cast.LoadCase.empty;
+        end
+    end
 end
 
 function val = max_step(i)
