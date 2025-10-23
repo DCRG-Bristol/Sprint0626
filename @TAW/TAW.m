@@ -56,7 +56,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         FowlerSlots = 1;
         RefMass = nan;
 
-        AeroSurrogate api.AbstractPolar = aero.NullPolar();
+        AeroSurrogate cast.size.AbstractPolar
         LoadsSurrogateType string {mustBeMember(LoadsSurrogateType,["Enforced","Nastran"])} = "Enforced"
     end
 

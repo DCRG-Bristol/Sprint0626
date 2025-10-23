@@ -1,4 +1,4 @@
-classdef AeroSurrogateV2 < api.AbstractPolar
+classdef AeroSurrogateV2 < cast.size.AbstractPolar
     %POLAR_SURROGATE Summary of this class goes here
     %   Detailed explanation goes here
 

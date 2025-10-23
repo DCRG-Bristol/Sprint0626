@@ -1,4 +1,4 @@
-classdef NitaShevellPolar < api.AbstractPolar
+classdef NitaShevellPolar < cast.size.AbstractPolar
     %POLAR_SURROGATE Summary of this class goes here
     %   Detailed explanation goes here
 
