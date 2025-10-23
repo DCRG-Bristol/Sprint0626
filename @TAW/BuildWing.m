@@ -33,7 +33,7 @@ tc_tip = obj.TCR_root - 0.03;
 
 % calculate wing planform shape
 D_join = sqrt((D_c/2)^2-(D_c/4)^2)*2;
-tr_out = 0.35;
+tr_out = obj.TaperRatio;
 S = @(x)wingArea(obj.WingArea,obj.AR,tr_out,KinkEta,x,D_join,sweep_qtr);
 c = fminsearch(@(x)(S(x)-obj.WingArea).^2,obj.WingArea./sqrt(obj.WingArea*obj.AR)); % get root chord
 [~,cs,LE_sweeps,TE_sweeps] = wingArea(obj.WingArea,obj.AR,tr_out,KinkEta,c,D_join,sweep_qtr); % get final parameters

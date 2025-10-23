@@ -1,11 +1,16 @@
-clear all
+% clear all
 load('example_data\A220_simple.mat')
 
-% ========================= Set Hyper-parameters =========================
-load("+globalOpt\Trainingset_500.mat")
+%% ========================= Count Error =========================
+load("+globalOpt\Trainingset_5000.mat")
 idx = find(TrainingSet(:,end)==0 | isnan(TrainingSet(:,end)))';
-ads.Log.info(sprintf('%.0f Errors',length(idx)))
-ii = idx(3);
+
+
+ads.Log.info(sprintf('%.0f Errors',length(idx)),"High")
+ads.Log.setLevel("Info","High")
+
+% ========================= Build it =========================
+ii = idx(1);
 % idx =2;
 disp(TrainingSet(ii,:))
 
@@ -20,11 +25,22 @@ ADP.BuildBaff("Retracted",false);
 f = figure(1);clf;ADP.Baff.draw(f);axis equal
 
 %% ============================ Re-run Sizing =============================
-% conduct sizing
 input = [ADP.AR,ADP.HingeEta,ADP.FlareAngle,ADP.ADR.M_c,ADP.SweepAngle];
 sizeSample(input,true,true)
 
+%% append data 
+for i = 1:length(idx)
+try
+    load('example_data\A220_simple.mat')
+    input = TrainingSet(idx(i),1:5);
+    TrainingSet(idx(i),6:end) = sizeSample(input,true,true);
+    ads.util.printing.title(sprintf('Run %.0f Success',idx(i)),"Symbol",'*');
+catch
+    ads.util.printing.title(sprintf('Run %.0f Failed',idx(i)),"Symbol",'$');
+end
+end
 
+save("+globalOpt\Trainingset_5000.mat",'TrainingSet')
 %% ======================== Get Mission Fuel Burn =========================
 % [~,~,trip_fuel,trip_time] = ADP.MJperPAX(3000./cast.SI.Nmile,1);
 % ads.Log.info('')

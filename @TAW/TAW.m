@@ -32,7 +32,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
 
         WingBeamElements = 25;
 
-        
+
         MainWingRHS;
         MainWingLHS;
 
@@ -41,7 +41,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         isWingAreaFixed = false;
 
         WingIndependentVar string {ismember(WingIndependentVar,{'AR','Span'})} = "Span";
-        
+
 
         BallastMass = 0;
 
@@ -52,7 +52,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         WingBallastEta = 1;
 
         SecondaryMethod string {mustBeMember(SecondaryMethod,{'Prop','Planform'})} = "Prop";
-        
+
         FowlerSlots = 1;
         RefMass = nan;
 
@@ -68,6 +68,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         NoKink = false;
         KinkPos = 5.75;
         EnginePos = 5.5;
+        TaperRatio = 0.35;
     end
 
     properties
@@ -141,7 +142,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
             end
         end
     end
-    
+
     methods
         function m = PrintMass(obj)
             m = [];
@@ -168,7 +169,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
             num2clip(m');
         end
         function PrintMassNames(obj)
-%             m = [];
+            %             m = [];
             m(1) = "MTOM [tn]";
             m(2) = "Wing Mass [tn]";
             m(3) = "Fuselage Mass [tn]";
@@ -237,16 +238,16 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
             meta.CL_c = obj.CL_cruise;
             meta.CD0 = obj.CD0;
             meta.e = obj.e;
-%             meta.HingeEta = obj.HingeEta;
-%             meta.IsLightHinge = obj.IsLightHinge;
+            %             meta.HingeEta = obj.HingeEta;
+            %             meta.IsLightHinge = obj.IsLightHinge;
         end
         function obj = TAW_pbs()
         end
-%         function val = ToStruct(obj)
-%             warning('off','MATLAB:structOnObject')
-%             val = struct(obj);
-%             warning('on','MATLAB:structOnObject')
-%         end
+        %         function val = ToStruct(obj)
+        %             warning('off','MATLAB:structOnObject')
+        %             val = struct(obj);
+        %             warning('on','MATLAB:structOnObject')
+        %         end
 
         function [X,X_w,X_h,mac] = GetNeutralPoint(obj)
             % wing properites
@@ -266,15 +267,32 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
                 obj
                 model = obj.Baff;
             end
-            % AdjustCoM adjust wing pos to get CoM at OEM at p % of MAC
-            model = obj.Baff;
-            
-            [model.Payload.FillingLevel] = deal(0);
-            [model.Fuel.FillingLevel] = deal(0);
-            % get overall CoM (OEM)
-            [COM,oem] = model.GetCoM;
-            p_max = sum([model.Payload.Capacity]);
-            f_max = sum([model.Fuel.Capacity]);
+            [model.Payload.FillingLevel] = deal(1);
+            [model.Fuel.FillingLevel] = deal(1);
+            [COMmax,maxmass] = model.GetCoM;
+            % get COM of payload
+            N = numel(model.Payload);
+            pms = zeros(1,N);
+            pXs = zeros(3,N);
+            for i = 1:N
+                [pXs(:,i),pms(i)] = model.Payload(i).GetGlobalCoM;
+            end
+            p_max = sum(pms);
+            pX = sum((pXs.*pms),2)./p_max;
+            % get COM of fuel
+            N = numel(model.Fuel);
+            fms = zeros(1,N);
+            fXs = zeros(3,N);
+            for i = 1:N
+                [fXs(:,i),fms(i)] = model.Fuel(i).GetGlobalCoM;
+            end
+            f_max = sum(fms);
+            fX = sum((fXs.*fms),2)./f_max;
+
+            % calc OEM
+            oem = maxmass - f_max - p_max;
+            COM = (maxmass.* COMmax - f_max.*fX - p_max.*pX)./oem;
+
             mtom = obj.MTOM;
             % get fractions at differnt stages of flight
             if oem>mtom
@@ -284,18 +302,17 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
                 vals = [0;0];
                 return
             end
+
+            % calc CoM range
             p_asym = max(0,(mtom-oem-f_max));
             f_asym = max(0,(mtom-oem-p_max));
             vals = [  0 1 1 p_asym/p_max 0;...   % OEM, max payload zero fuel, max payload MTOM. max fuel MTOM. max fuel
-                        0 0 f_asym/f_max 1 1]; 
-            [x,m] = deal(zeros(1,size(vals,2)));
-            for i = 1:size(vals,2)
-                [model.Payload.FillingLevel] = deal(vals(1,i));
-                [model.Fuel.FillingLevel] = deal(vals(2,i));
-                % get overall CoM (OEM)
-                [CoM,m(i)] = model.GetCoM;
-                x(i) = CoM(1);
-            end
+                0 0 f_asym/f_max 1 1];
+            m = oem + vals(1,:).*p_max + vals(2,:).*f_max;
+            x = (COM(1).*oem + pX(1).*(vals(1,:).*p_max) + fX(1).*(vals(2,:).*f_max))./m;
+
+            [model.Payload.FillingLevel] = deal(0);
+            [model.Fuel.FillingLevel] = deal(1);
         end
 
         function AdjustCoM(obj,p)
@@ -312,10 +329,10 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
             % get wing com
             wing_r = obj.MainWingRHS(1);
             [CoM_rhs,m_rhs] = wing_r.GetGlobalCoM;
-%             CoM_rhs =  wing_r.Parent.GetPos(wing_r.Eta) + wing_r.Offset + wing_r.A'*CoM_rhs;
+            %             CoM_rhs =  wing_r.Parent.GetPos(wing_r.Eta) + wing_r.Offset + wing_r.A'*CoM_rhs;
             wing_l = obj.MainWingLHS(1);
             [CoM_lhs,m_lhs] = wing_l.GetGlobalCoM;
-%             CoM_lhs = wing_l.Parent.GetPos(wing_l.Eta) + wing_l.Offset + wing_l.A'*CoM_lhs;
+            %             CoM_lhs = wing_l.Parent.GetPos(wing_l.Eta) + wing_l.Offset + wing_l.A'*CoM_lhs;
             m_w = m_rhs + m_lhs;
             x_w = (CoM_lhs(1).*m_lhs + CoM_rhs(1).*m_rhs)./m_w;
             %% get wing MAC
@@ -339,7 +356,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
             if imag(eta)~=0
                 error('Help')
             end
-            
+
             if isnan(eta)
                 error('Undefined Wing position calulated')
             end
@@ -347,6 +364,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
             obj.MainWingRHS(1).Eta = eta;
             obj.MainWingLHS(1).Eta = eta;
             obj.Baff = model;
+            % eta
         end
 
 
@@ -385,7 +403,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
             m_f = m-m_w;
             x_f = (x_a*m - x_w*m_w)/m_f;
             S = S_h+S_w;
-%             x_w_new = (x_mac_h*S_h*m + mac*m*S*factor - x_f*m_f*S - delta_mac*m_w*S)/(m_w*S-m*S_w);
+            %             x_w_new = (x_mac_h*S_h*m + mac*m*S*factor - x_f*m_f*S - delta_mac*m_w*S)/(m_w*S-m*S_w);
             x_w_new = (x_mac_h*S_h*m + mac*m*S*p - x_f*m_f*S + delta_mac*m*S_w)/(m_w*S-m*S_w);
 
             % adjust eta

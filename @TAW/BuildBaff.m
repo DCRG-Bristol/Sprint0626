@@ -265,13 +265,17 @@ delta_wing_eta = abs(eta_old-obj.MainWingRHS(1).Eta);
 obj.WingEta = obj.MainWingRHS(1).Eta;
 
 % get aft most CG position 
+
 xs = obj.GetCoMRange();
+
 x_aft = max(xs);
 delta_com = abs(x_aft/fuselage.EtaLength - obj.AftEta);
 obj.AftEta = x_aft/fuselage.EtaLength;
+
 
 if max(delta_wing_eta,delta_com)>0.001
     optsCell = namedargs2cell(opts);
     obj.BuildBaff(optsCell{:});
 end
+
 end
