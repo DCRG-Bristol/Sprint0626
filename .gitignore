@@ -59,3 +59,4 @@ bin
 !+loads/bin/*.mat
 !bayes_opt_multi_obj_det_opt_for_bf_and_toc.mat
 !bayes_opt_multi_obj_det_opt_for_bf_and_toc_nastran.mat
+!ga_multi_obj_det_opt_for_bf_and_toc.mat
