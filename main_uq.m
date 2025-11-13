@@ -1837,9 +1837,9 @@ for ii = 1:N_pareto_points
 end    
 
 fig = figure();
-plot(toc_multi_obj, bf_multi_obj, 'o-', 'LineWidth', 2);
-xlabel('Direct operating cost');
-ylabel('Block fuel');
+plot(bf_multi_obj, toc_multi_obj, 'o-', 'LineWidth', 2);
+xlabel('Fuel Burn (FB)');
+ylabel('Direct Operating Cost (DOC)');
 title('Pareto Front (Bayesian optimisation)');
 grid on;
 saveas(fig, 'Pareto_opt_for_bf_and_toc.png')
@@ -1896,6 +1896,64 @@ saveas(fig, 'Pareto_opt_for_bf_and_toc_nastran.png')
 saveas(fig, 'Pareto_opt_for_bf_and_toc_nastran.fig')
 
 save('bayes_opt_multi_obj_det_opt_for_bf_and_toc_nastran.mat', 'bf_multi_obj', 'toc_multi_obj', 'x_opt_multi_obj')
+
+%% 15. Genetic algorithm - Deterministic multi-objective optimisation (minimise block fuel and TOC)
+% first, minimise BF and TOC separately
+
+% Objective function
+objFun_bf = @(x) DetOptObjective_bf(x);
+% Bounds
+lb = [0, 0.45, 11, 0.45];  % Lower bounds
+ub = [45, 0.9, 23, 1];     % Upper bounds
+% Number of variables
+nvars = 4;
+% GA options
+options = optimoptions('ga', ...
+    'Display', 'iter', ...        % Show iteration details
+    'PopulationSize', 30, ...     % Increase population for better exploration
+    'MaxGenerations', 20, ...    % More generations for convergence
+    'PlotFcn', {@gaplotbestf});   % Plot best fitness over generations
+% Run GA
+[x_opt_bf_ga, fval_bf_ga] = ga(objFun_bf, nvars, [], [], [], [], lb, ub, [], options);
+% Objective function
+objFun_toc = @(x) DetOptObjective_toc(x);
+% Solve
+[x_opt_toc_ga, fval_toc_ga] = ga(objFun_toc, nvars, [], [], [], [], lb, ub, [], options);
+
+% prepare multi-objective
+fval_toc_max_ga = DetOptObjective_toc(x_opt_bf_ga);
+fval_bf_max_ga = DetOptObjective_bf(x_opt_toc_ga);
+N_pareto_points = 10;
+x_opt_multi_obj_ga = zeros(N_pareto_points, nvars);
+fval_bf_multi_obj_ga = zeros(N_pareto_points, 1);
+fval_bf_multi_obj_ga(1) = fval_bf_max_ga;
+fval_bf_multi_obj_ga(end) = fval_bf_ga;
+fval_toc_multi_obj_ga = zeros(N_pareto_points, 1);
+fval_toc_multi_obj_ga(1) = fval_toc_ga;
+fval_toc_multi_obj_ga(end) = fval_toc_max_ga;
+multi_obj_toc_ga_threshold = linspace(fval_toc_ga, fval_toc_max_ga, N_pareto_points);
+for ii = 2:N_pareto_points-1
+    % Constraint function
+    nonlcon_pareto_ga = @(x) nonlinearConstraints_bf_toc(x, multi_obj_toc_ga_threshold(ii));
+    % Solve
+    [x_opt_ga_pareto, fval_ga_pareto] = ga(objFun_bf, nvars, [], [], [], [], lb, ub, nonlcon_pareto_ga, options);
+    x_opt_multi_obj_ga(ii, :) = x_opt_ga_pareto;
+    fval_bf_multi_obj_ga(ii) = fval_ga_pareto;
+    fval_toc_multi_obj_ga(ii) = DetOptObjective_toc(x_opt_ga_pareto);
+end    
+
+x_opt_multi_obj_ga(1, :) = x_opt_toc_ga;
+x_opt_multi_obj_ga(end, :) = x_opt_bf_ga;
+fig = figure();
+plot(fval_toc_multi_obj_ga, fval_bf_multi_obj_ga, 'o-', 'LineWidth', 2);
+xlabel('Direct operating cost');
+ylabel('Block fuel');
+title('Pareto Front (Genetic Algorithm)');
+grid on;
+saveas(fig, 'Pareto_opt_for_bf_and_toc_ga.png')
+saveas(fig, 'Pareto_opt_for_bf_and_toc_ga.fig')
+
+save('ga_multi_obj_det_opt_for_bf_and_toc.mat', 'fval_bf_multi_obj_ga', 'fval_toc_multi_obj_ga', 'x_opt_multi_obj_ga')
 
 %%
 function f = myObjectives(x, surrogates_bf_doc)
@@ -1981,4 +2039,37 @@ function [objective, constraint1] = BayesOptMultiObjectiveConstraints_nastran(x,
         objective = NaN;
         constraint1 = NaN;
     end
+end
+
+function objective = DetOptObjective_bf(x)
+    % Objective function
+    fun = @(x) physical_model_indep_sweep_ar_he_block_fuel(x);
+    try
+        objective = fun(x);
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        objective = 1e6;
+    end
+end
+
+function objective = DetOptObjective_toc(x)
+    % Objective function
+    fun = @(x) physical_model_indep_sweep_ar_he_toc(x);
+    try
+        objective = fun(x);
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        objective = 1e6;
+    end
+end
+
+function [c, ceq] = nonlinearConstraints_bf_toc(x, toc_threshold)
+    fun = @(x) physical_model_indep_sweep_ar_he_toc(x);
+    try
+        c = fun(x)-toc_threshold;
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        c = 1e6;
+    end
+    ceq = [];  % No equality constraints
 end
