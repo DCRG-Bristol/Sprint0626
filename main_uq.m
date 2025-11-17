@@ -1897,7 +1897,7 @@ saveas(fig, 'Pareto_opt_for_bf_and_toc_nastran.fig')
 
 save('bayes_opt_multi_obj_det_opt_for_bf_and_toc_nastran.mat', 'bf_multi_obj', 'toc_multi_obj', 'x_opt_multi_obj')
 
-%% 15. Genetic algorithm - Deterministic multi-objective optimisation (minimise block fuel and TOC)
+%% 14. Genetic algorithm - Deterministic multi-objective optimisation (minimise block fuel and TOC)
 % first, minimise BF and TOC separately
 
 % Objective function
@@ -1954,6 +1954,69 @@ saveas(fig, 'Pareto_opt_for_bf_and_toc_ga.png')
 saveas(fig, 'Pareto_opt_for_bf_and_toc_ga.fig')
 
 save('ga_multi_obj_det_opt_for_bf_and_toc.mat', 'fval_bf_multi_obj_ga', 'fval_toc_multi_obj_ga', 'x_opt_multi_obj_ga')
+
+%% 15. Multi-objective genetic algorithm - Deterministic multi-objective optimisation (minimise block fuel and TOC)
+
+% Objective function
+objFun_bf_toc = @(x) DetOptObjective_bf_toc(x);
+% Bounds
+lb = [0, 0.45, 11, 0.45];  % Lower bounds
+ub = [45, 0.9, 23, 1];     % Upper bounds
+% Number of variables
+nvars = 4;
+
+% Options
+options = optimoptions('gamultiobj', ...
+    'PopulationSize', 100, ...
+    'MaxGenerations', 200, ...
+    'PlotFcn', {@gaplotpareto});
+
+% Run multi-objective GA
+[x_opt_multi_obj_ga_pareto, fval] = gamultiobj(objFun_bf_toc, nvars, [], [], [], [], lb, ub, options);
+
+fig = figure();
+scatter(fval(:, 1), fval(:, 2), 'filled');
+xlabel('Fuel Burn (FB)');
+ylabel('Direct Operating Cost (DOC)');
+title('Pareto Front (Genetic Algorithm)');
+grid on;
+saveas(fig, 'Pareto_opt_for_bf_and_toc_ga_converged.png')
+saveas(fig, 'Pareto_opt_for_bf_and_toc_ga_converged.fig')
+
+save('ga_multi_obj_det_opt_for_bf_and_toc_converged.mat', 'fval', 'x_opt_multi_obj_ga_pareto')
+
+%% 16. Method comparison for deterministic optimisation
+
+% method comparison (ga vs ga+gp vs bo)
+fig = figure();
+scatter(fval(:, 1), fval(:, 2), 'filled', 'MarkerFaceColor', 'r');
+hold on
+scatter(true_model_all_custom_he_fa_output_pareto(:, 1), true_model_all_custom_he_fa_output_pareto(:, 2), 'filled', 'MarkerFaceColor', 'b');
+scatter(bf_multi_obj_enforced, toc_multi_obj_enforced, 'filled', 'MarkerFaceColor', 'g');
+% Add legend
+legend({'GA', 'GA+GP', 'BO'}, 'Location', 'best');
+xlabel('Fuel Burn (FB)');
+ylabel('Direct Operating Cost (DOC)');
+title('Pareto Fronts');
+grid on;
+hold off;
+saveas(fig, 'Pareto_opt_for_bf_and_toc_method_comparison.png')
+saveas(fig, 'Pareto_opt_for_bf_and_toc_method_comparison.fig')
+
+% method comparison (enforced lift dist'n vs nastran)
+fig = figure();
+scatter(bf_multi_obj_enforced, toc_multi_obj_enforced, 'filled', 'MarkerFaceColor', 'b');
+hold on
+scatter(bf_multi_obj_nastran, toc_multi_obj_nastran, 'filled', 'MarkerFaceColor', 'r');
+% Add legend
+legend({'Low fidelity', 'NASTRAN'}, 'Location', 'best');
+xlabel('Fuel Burn (FB)');
+ylabel('Direct Operating Cost (DOC)');
+title('Pareto Fronts (Bayesian Optimisation)');
+grid on;
+hold off;
+saveas(fig, 'Pareto_opt_for_bf_and_toc_method_comparison_nastran.png')
+saveas(fig, 'Pareto_opt_for_bf_and_toc_method_comparison_nastran.fig')
 
 %%
 function f = myObjectives(x, surrogates_bf_doc)
@@ -2072,4 +2135,15 @@ function [c, ceq] = nonlinearConstraints_bf_toc(x, toc_threshold)
         c = 1e6;
     end
     ceq = [];  % No equality constraints
+end
+
+function objective = DetOptObjective_bf_toc(x)
+    % Objective function
+    fun = @(x) physical_model_indep_sweep_ar_he_block_fuel_toc(x);
+    try
+        objective = fun(x);
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        objective = [1e6, 1e6];
+    end
 end
