@@ -1794,7 +1794,7 @@ plot(true_model_all_custom_he_fa_sorted_points(:,1), true_model_all_custom_he_fa
 hold on 
 plot(surrogate_model_all_custom_he_fa_sorted_points(:,1), surrogate_model_all_custom_he_fa_sorted_points(:,2), 'o-', 'LineWidth', 2, 'DisplayName', 'Surrogate Model');
 xlabel('Fuel Burn (FB)');
-ylabel('Direct Operating Cost (DOC)');
+ylabel('Total Operating Cost (TOC)');
 title('Pareto Front (Genetic Algorithm with Kriging surrogates)');
 grid on;
 legend();
@@ -1977,7 +1977,7 @@ options = optimoptions('gamultiobj', ...
 fig = figure();
 scatter(fval(:, 1), fval(:, 2), 'filled');
 xlabel('Fuel Burn (FB)');
-ylabel('Direct Operating Cost (DOC)');
+ylabel('Total Operating Cost (TOC)');
 title('Pareto Front (Genetic Algorithm)');
 grid on;
 saveas(fig, 'Pareto_opt_for_bf_and_toc_ga_converged.png')
@@ -1996,7 +1996,7 @@ scatter(bf_multi_obj_enforced, toc_multi_obj_enforced, 'filled', 'MarkerFaceColo
 % Add legend
 legend({'GA', 'GA+GP', 'BO'}, 'Location', 'best');
 xlabel('Fuel Burn (FB)');
-ylabel('Direct Operating Cost (DOC)');
+ylabel('Total Operating Cost (TOC)');
 title('Pareto Fronts');
 grid on;
 hold off;
@@ -2011,7 +2011,7 @@ scatter(bf_multi_obj_nastran, toc_multi_obj_nastran, 'filled', 'MarkerFaceColor'
 % Add legend
 legend({'Low fidelity', 'NASTRAN'}, 'Location', 'best');
 xlabel('Fuel Burn (FB)');
-ylabel('Direct Operating Cost (DOC)');
+ylabel('Total Operating Cost (TOC)');
 title('Pareto Fronts (Bayesian Optimisation)');
 grid on;
 hold off;
