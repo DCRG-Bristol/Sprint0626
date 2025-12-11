@@ -2097,6 +2097,54 @@ hold off;
 saveas(fig, 'Pareto_opt_for_toc_method_comparison_uncertain_fuel_price.png')
 saveas(fig, 'Pareto_opt_for_toc_method_comparison_uncertain_fuel_price.fig')
 
+%% 19. Bayesian optimisation - Robust optimisation for fuel cost (design variables: sweep, Mach, Hinge, AR; uncertain fuel price)
+% Number of variables
+nvars = 4;
+x1 = optimizableVariable('x1', [0, 45]);      % (Sweep angle) lower and upper design optimisation bound
+x2 = optimizableVariable('x2', [0.45, 0.9]);  % (Mach no.) lower and upper design optimisation bound
+x3 = optimizableVariable('x3', [11, 23]);     % (AR) lower and upper design optimisation bound
+x4 = optimizableVariable('x4', [0.45, 1]);    % (HingeEta) lower and upper design optimisation bound
+% Objective function
+fun_sigma_toc = @(x) BayesOptObjective_sigma_toc_fuel_cost(x);
+% Solve
+results_sigma_toc = bayesopt(fun_sigma_toc,[x1,x2,x3,x4],'IsObjectiveDeterministic',true, 'MaxObjectiveEvaluations', 100);
+x_opt_sigma_toc = results_sigma_toc.XAtMinObjective;
+fval_sigma_toc = results_sigma_toc.MinObjective;
+% Objective function
+fun_mean_toc = @(x) BayesOptObjective_mean_toc_fuel_cost(x);
+% Solve
+results_mean_toc = bayesopt(fun_mean_toc,[x1,x2,x3,x4],'IsObjectiveDeterministic',true, 'MaxObjectiveEvaluations', 100);
+x_opt_mean_toc = results_mean_toc.XAtMinObjective;
+fval_mean_toc = results_mean_toc.MinObjective;
+
+% prepare multi-objective
+fval_sigma_toc_max = BayesOptObjective_sigma_toc_fuel_cost(x_opt_mean_toc);
+fval_mean_toc_max = BayesOptObjective_mean_toc_fuel_cost(x_opt_sigma_toc);
+N_pareto_points = 10;
+x_opt_robust_multi_obj = zeros(N_pareto_points, nvars);
+fval_sigma_toc_multi_obj = zeros(N_pareto_points, 1);
+fval_sigma_toc_multi_obj(1) = fval_sigma_toc_max;
+fval_sigma_toc_multi_obj(end) = fval_sigma_toc;
+fval_mean_toc_multi_obj = zeros(N_pareto_points, 1);
+fval_mean_toc_multi_obj(1) = fval_mean_toc;
+fval_mean_toc_multi_obj(end) = fval_mean_toc_max;
+multi_obj_mean_toc_threshold = linspace(fval_mean_toc, fval_mean_toc_max, N_pareto_points);
+
+for ii = 2:N_pareto_points-1
+    % Objective function
+    fun = @(x) BayesOptMultiObjectiveConstraints_mean_sigma_toc_fuel_cost(x, multi_obj_mean_toc_threshold(ii));
+    % Solve
+    results = bayesopt(fun,[x1,x2,x3,x4],'IsObjectiveDeterministic',true,'NumCoupledConstraints',1,'AcquisitionFunctionName','probability-of-improvement', 'MaxObjectiveEvaluations', 100);
+    x_opt_robust_multi_obj(ii, :) = results.XAtMinObjective{1,:};
+    fval_sigma_toc_multi_obj(ii) = results.MinObjective;
+    fval_mean_toc_multi_obj(ii) = results.ConstraintsTrace(results.IndexOfMinimumTrace(end))+multi_obj_mean_toc_threshold(ii);
+end    
+
+x_opt_robust_multi_obj(1, :) = x_opt_mean_toc{1, :};
+x_opt_robust_multi_obj(end, :) = x_opt_sigma_toc{1, :};
+ 
+save('bayes_opt_robust_multi_obj_for_mean_and_sigma_toc_fuel_cost.mat', 'fval_mean_toc_multi_obj', 'fval_sigma_toc_multi_obj', 'x_opt_robust_multi_obj')
+
 %%
 function f = myObjectives(x, surrogates_bf_doc)
     f_val = uq_evalModel(surrogates_bf_doc, x);  
@@ -2393,6 +2441,179 @@ function [objective, constraint1] = BayesOptMultiObjectiveConstraints_mean_sigma
         custom_swept_wing_uncertain_price =  surrogates_uq(MetaOpts_custom_swept_wing_uncertain_price, N_outputs_custom_swept_wing_uncertain_price, N_train_increment, N_train_max, flag_parfor, seed, fullPath, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
         elementToSave = custom_swept_wing_uncertain_price; 
         save(fullfile(fullPath, 'true_model_total_operating_cost_bayes_opt_candidate.mat'), 'elementToSave'); % save the surrogate
+      
+        N_MC_test = 10^6;
+        inputs_for_sigma = uq_getSample(myInput_custom_swept_wing_uncertain_price, N_MC_test, 'MC');      % generate N_MC Monte Carlo points in the uncertain variables' space
+        outputs_for_sigma = uq_evalModel(elementToSave, inputs_for_sigma);   % evaluate the surrogates to get QIs data
+        objective = std(outputs_for_sigma, 1);
+        constraint1 = mean(outputs_for_sigma, 1)-mean_threshold;
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        objective = NaN;
+        constraint1 = NaN;
+    end
+end
+
+function objective = BayesOptObjective_sigma_toc_fuel_cost(x)
+    try
+        % Robust Optimisation - Description of the uncertain variables for UQLab
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Type = 'Uniform';
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Parameters = [0.9*0.64995, 1.1*0.64995]; % (Fuel price) lower and upper uncertainty bound
+        % The uncertain variables are inputs for physical maps that output QIs
+        myInput_custom_swept_wing_uncertain_price = uq_createInput(InputOpts_custom_swept_wing_uncertain_price); 
+        % Description of the physical model for UQLab
+        ModelOpts_custom_swept_wing_uncertain_price.mFile = 'physical_model_indep_sweep_ar_he_fuel_cost_uncertain_fuel_price';
+        ModelOpts_custom_swept_wing_uncertain_price.isVectorized = false;
+        ModelOpts_custom_swept_wing_uncertain_price.Parameters = [x{1, 1} x{1, 2} x{1, 3} x{1, 4}];
+        myModel_custom_swept_wing_uncertain_price = uq_createModel(ModelOpts_custom_swept_wing_uncertain_price);
+
+        N_train = 5;                                     % initial training set size (the set will be updated until the surrogate validation error is low enough)
+        MetaOpts_custom_swept_wing_uncertain_price.Type = 'Metamodel';             % 'metamodel': another word for 'surrogate'
+        % MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'Kriging';      
+        MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'PCE';
+        MetaOpts_custom_swept_wing_uncertain_price.Input = myInput_custom_swept_wing_uncertain_price;        % probability distribution for the uncertain variables
+        MetaOpts_custom_swept_wing_uncertain_price.FullModel = myModel_custom_swept_wing_uncertain_price;    % the physical model as a UQLab object
+        MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.NSamples = N_train;   % 'experimental design' (ExpDesign): another word for 'training set'
+        if strcmp(MetaOpts_custom_swept_wing_uncertain_price.MetaType, 'Kriging')
+            MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.Sampling = 'User';
+        end
+
+        flag_parfor = true;             % can we run the physical model in parallel to build the training set? (True/False)
+        seed = 100;                     % seed for reproducibility due to randomness in sampling the training set
+        N_train_increment = 5;          % we will increment the training set size until we reach convergence
+        N_train_max = 5;                % training budget (i.e., maximum number of training points allowed)
+        % run a test to check if surrogates are actually faster than classical MC for mean and sigma estimation  
+        % recommended only for cheap models (to find the true mean and sigma, we need a large MC with the physical model) 
+        flag_test_for_mean_and_sigma = false;
+
+        % Plots generator for parameter sweeps for the uncertain variables
+        inputs_name_custom_swept_wing_uncertain_price = ["Fuel price"];  % list of the names of the uncertain variables
+        outputs_name_custom_swept_wing_uncertain_price = ["Fuel cost"];    % list of the names of the QIs
+        N_outputs_custom_swept_wing_uncertain_price = length(outputs_name_custom_swept_wing_uncertain_price);           % number of quantities of interest (QIs)
+        descriptive_title_for_plots_custom_swept_wing_uncertain_price = sprintf('%s surrogate', MetaOpts_custom_swept_wing_uncertain_price.MetaType);
+        N_eval = 100;                                                        % number of discretisation points for each uncertain variable (for plots)
+        plotsfolderName = 'custom_sweep_ar_he_wing_fuel_cost_uncertain_price_optimisation_uq'; 
+        subfolder_plotsfolderName = 'Bayes_opt_candidate'; 
+        fullPath = fullfile(plotsfolderName, subfolder_plotsfolderName);
+        mkdir(fullPath);
+        mkdir(fullPath, 'plots_uq');
+        custom_swept_wing_uncertain_price =  surrogates_uq(MetaOpts_custom_swept_wing_uncertain_price, N_outputs_custom_swept_wing_uncertain_price, N_train_increment, N_train_max, flag_parfor, seed, fullPath, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+        elementToSave = custom_swept_wing_uncertain_price; 
+        save(fullfile(fullPath, 'true_model_fuel_cost_bayes_opt_candidate.mat'), 'elementToSave'); % save the surrogate
+      
+        N_MC_test = 10^6;
+        inputs_for_sigma = uq_getSample(myInput_custom_swept_wing_uncertain_price, N_MC_test, 'MC');      % generate N_MC Monte Carlo points in the uncertain variables' space
+        outputs_for_sigma = uq_evalModel(elementToSave, inputs_for_sigma);   % evaluate the surrogates to get QIs data
+        objective = std(outputs_for_sigma, 1);
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        objective = NaN;
+    end
+end
+
+function objective = BayesOptObjective_mean_toc_fuel_cost(x)
+    try
+        % Robust Optimisation - Description of the uncertain variables for UQLab
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Type = 'Uniform';
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Parameters = [0.9*0.64995, 1.1*0.64995]; % (Fuel price) lower and upper uncertainty bound
+        % The uncertain variables are inputs for physical maps that output QIs
+        myInput_custom_swept_wing_uncertain_price = uq_createInput(InputOpts_custom_swept_wing_uncertain_price); 
+        % Description of the physical model for UQLab
+        ModelOpts_custom_swept_wing_uncertain_price.mFile = 'physical_model_indep_sweep_ar_he_fuel_cost_uncertain_fuel_price';
+        ModelOpts_custom_swept_wing_uncertain_price.isVectorized = false;
+        ModelOpts_custom_swept_wing_uncertain_price.Parameters = [x{1, 1} x{1, 2} x{1, 3} x{1, 4}];
+        myModel_custom_swept_wing_uncertain_price = uq_createModel(ModelOpts_custom_swept_wing_uncertain_price);
+
+        N_train = 5;                                     % initial training set size (the set will be updated until the surrogate validation error is low enough)
+        MetaOpts_custom_swept_wing_uncertain_price.Type = 'Metamodel';             % 'metamodel': another word for 'surrogate'
+        % MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'Kriging';      
+        MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'PCE';
+        MetaOpts_custom_swept_wing_uncertain_price.Input = myInput_custom_swept_wing_uncertain_price;        % probability distribution for the uncertain variables
+        MetaOpts_custom_swept_wing_uncertain_price.FullModel = myModel_custom_swept_wing_uncertain_price;    % the physical model as a UQLab object
+        MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.NSamples = N_train;   % 'experimental design' (ExpDesign): another word for 'training set'
+        if strcmp(MetaOpts_custom_swept_wing_uncertain_price.MetaType, 'Kriging')
+            MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.Sampling = 'User';
+        end
+
+        flag_parfor = true;             % can we run the physical model in parallel to build the training set? (True/False)
+        seed = 100;                     % seed for reproducibility due to randomness in sampling the training set
+        N_train_increment = 5;          % we will increment the training set size until we reach convergence
+        N_train_max = 5;                % training budget (i.e., maximum number of training points allowed)
+        % run a test to check if surrogates are actually faster than classical MC for mean and sigma estimation  
+        % recommended only for cheap models (to find the true mean and sigma, we need a large MC with the physical model) 
+        flag_test_for_mean_and_sigma = false;
+
+        % Plots generator for parameter sweeps for the uncertain variables
+        inputs_name_custom_swept_wing_uncertain_price = ["Fuel price"];  % list of the names of the uncertain variables
+        outputs_name_custom_swept_wing_uncertain_price = ["Fuel cost"];    % list of the names of the QIs
+        N_outputs_custom_swept_wing_uncertain_price = length(outputs_name_custom_swept_wing_uncertain_price);           % number of quantities of interest (QIs)
+        descriptive_title_for_plots_custom_swept_wing_uncertain_price = sprintf('%s surrogate', MetaOpts_custom_swept_wing_uncertain_price.MetaType);
+        N_eval = 100;                                                        % number of discretisation points for each uncertain variable (for plots)
+        plotsfolderName = 'custom_sweep_ar_he_wing_fuel_cost_uncertain_price_optimisation_uq';
+        subfolder_plotsfolderName = 'Bayes_opt_candidate'; 
+        fullPath = fullfile(plotsfolderName, subfolder_plotsfolderName);
+        mkdir(fullPath);
+        mkdir(fullPath, 'plots_uq');
+        custom_swept_wing_uncertain_price =  surrogates_uq(MetaOpts_custom_swept_wing_uncertain_price, N_outputs_custom_swept_wing_uncertain_price, N_train_increment, N_train_max, flag_parfor, seed, fullPath, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+        elementToSave = custom_swept_wing_uncertain_price; 
+        save(fullfile(fullPath, 'true_model_fuel_cost_bayes_opt_candidate.mat'), 'elementToSave'); % save the surrogate
+      
+        N_MC_test = 10^6;
+        inputs_for_mean = uq_getSample(myInput_custom_swept_wing_uncertain_price, N_MC_test, 'MC');      % generate N_MC Monte Carlo points in the uncertain variables' space
+        outputs_for_mean = uq_evalModel(elementToSave, inputs_for_mean);   % evaluate the surrogates to get QIs data
+        objective = mean(outputs_for_mean, 1);
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        objective = NaN;
+    end
+end
+
+function [objective, constraint1] = BayesOptMultiObjectiveConstraints_mean_sigma_toc_fuel_cost(x, mean_threshold)
+    try
+        % Robust Optimisation - Description of the uncertain variables for UQLab
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Type = 'Uniform';
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Parameters = [0.9*0.64995, 1.1*0.64995]; % (Fuel price) lower and upper uncertainty bound
+        % The uncertain variables are inputs for physical maps that output QIs
+        myInput_custom_swept_wing_uncertain_price = uq_createInput(InputOpts_custom_swept_wing_uncertain_price); 
+        % Description of the physical model for UQLab
+        ModelOpts_custom_swept_wing_uncertain_price.mFile = 'physical_model_indep_sweep_ar_he_fuel_cost_uncertain_fuel_price';
+        ModelOpts_custom_swept_wing_uncertain_price.isVectorized = false;
+        ModelOpts_custom_swept_wing_uncertain_price.Parameters = [x{1, 1} x{1, 2} x{1, 3} x{1, 4}];
+        myModel_custom_swept_wing_uncertain_price = uq_createModel(ModelOpts_custom_swept_wing_uncertain_price);
+
+        N_train = 5;                                     % initial training set size (the set will be updated until the surrogate validation error is low enough)
+        MetaOpts_custom_swept_wing_uncertain_price.Type = 'Metamodel';             % 'metamodel': another word for 'surrogate'
+        % MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'Kriging';      
+        MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'PCE';
+        MetaOpts_custom_swept_wing_uncertain_price.Input = myInput_custom_swept_wing_uncertain_price;        % probability distribution for the uncertain variables
+        MetaOpts_custom_swept_wing_uncertain_price.FullModel = myModel_custom_swept_wing_uncertain_price;    % the physical model as a UQLab object
+        MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.NSamples = N_train;   % 'experimental design' (ExpDesign): another word for 'training set'
+        if strcmp(MetaOpts_custom_swept_wing_uncertain_price.MetaType, 'Kriging')
+            MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.Sampling = 'User';
+        end
+
+        flag_parfor = true;             % can we run the physical model in parallel to build the training set? (True/False)
+        seed = 100;                     % seed for reproducibility due to randomness in sampling the training set
+        N_train_increment = 5;          % we will increment the training set size until we reach convergence
+        N_train_max = 5;                % training budget (i.e., maximum number of training points allowed)
+        % run a test to check if surrogates are actually faster than classical MC for mean and sigma estimation  
+        % recommended only for cheap models (to find the true mean and sigma, we need a large MC with the physical model) 
+        flag_test_for_mean_and_sigma = false;
+
+        % Plots generator for parameter sweeps for the uncertain variables
+        inputs_name_custom_swept_wing_uncertain_price = ["Fuel price"];  % list of the names of the uncertain variables
+        outputs_name_custom_swept_wing_uncertain_price = ["Fuel cost"];    % list of the names of the QIs
+        N_outputs_custom_swept_wing_uncertain_price = length(outputs_name_custom_swept_wing_uncertain_price);           % number of quantities of interest (QIs)
+        descriptive_title_for_plots_custom_swept_wing_uncertain_price = sprintf('%s surrogate', MetaOpts_custom_swept_wing_uncertain_price.MetaType);
+        N_eval = 100;                                                        % number of discretisation points for each uncertain variable (for plots)
+        plotsfolderName = 'custom_sweep_ar_he_wing_fuel_cost_uncertain_price_optimisation_uq';
+        subfolder_plotsfolderName = 'Bayes_opt_candidate'; 
+        fullPath = fullfile(plotsfolderName, subfolder_plotsfolderName);
+        mkdir(fullPath);
+        mkdir(fullPath, 'plots_uq');
+        custom_swept_wing_uncertain_price =  surrogates_uq(MetaOpts_custom_swept_wing_uncertain_price, N_outputs_custom_swept_wing_uncertain_price, N_train_increment, N_train_max, flag_parfor, seed, fullPath, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+        elementToSave = custom_swept_wing_uncertain_price; 
+        save(fullfile(fullPath, 'true_model_fuel_cost_bayes_opt_candidate.mat'), 'elementToSave'); % save the surrogate
       
         N_MC_test = 10^6;
         inputs_for_sigma = uq_getSample(myInput_custom_swept_wing_uncertain_price, N_MC_test, 'MC');      % generate N_MC Monte Carlo points in the uncertain variables' space
