@@ -2145,6 +2145,92 @@ x_opt_robust_multi_obj(end, :) = x_opt_sigma_toc{1, :};
  
 save('bayes_opt_robust_multi_obj_for_mean_and_sigma_toc_fuel_cost.mat', 'fval_mean_toc_multi_obj', 'fval_sigma_toc_multi_obj', 'x_opt_robust_multi_obj')
 
+%% 20. BayesOpt- Deterministic multi-objective optimisation (minimise block fuel and TOC) + added fuel and oil price uncertainty
+load('bayes_opt_multi_obj_det_opt_for_bf_and_toc.mat')
+% remove the runs where BO returns a dominated point (visual inspection)
+rowsToRemove = 9;
+bf_multi_obj(rowsToRemove) = [];
+toc_multi_obj(rowsToRemove) = [];
+x_opt_multi_obj(rowsToRemove, :) = [];
+N_pareto_points_for_uncertain_analysis = size(x_opt_multi_obj, 1);
+predictive_intervals_90 = zeros(N_pareto_points_for_uncertain_analysis, 2);
+
+for ii = 1:N_pareto_points_for_uncertain_analysis
+    try
+        % Robust Optimisation - Description of the uncertain variables for UQLab
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Type = 'Uniform';
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(1).Parameters = [0.9*0.64995, 1.1*0.64995]; % (Fuel price) lower and upper uncertainty bound
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(2).Type = 'Uniform';
+        InputOpts_custom_swept_wing_uncertain_price.Marginals(2).Parameters = [0.9*30.0, 1.1*30.0]; % (Oil price) lower and upper uncertainty bound
+        % The uncertain variables are inputs for physical maps that output QIs
+        myInput_custom_swept_wing_uncertain_price = uq_createInput(InputOpts_custom_swept_wing_uncertain_price); 
+        % Description of the physical model for UQLab
+        ModelOpts_custom_swept_wing_uncertain_price.mFile = 'physical_model_indep_sweep_ar_he_uncertain_fuel_price';
+        ModelOpts_custom_swept_wing_uncertain_price.isVectorized = false;
+        ModelOpts_custom_swept_wing_uncertain_price.Parameters = x_opt_multi_obj(ii, :);
+        myModel_custom_swept_wing_uncertain_price = uq_createModel(ModelOpts_custom_swept_wing_uncertain_price);
+    
+        N_train = 5;                                     % initial training set size (the set will be updated until the surrogate validation error is low enough)
+        MetaOpts_custom_swept_wing_uncertain_price.Type = 'Metamodel';             % 'metamodel': another word for 'surrogate'
+        % MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'Kriging';      
+        MetaOpts_custom_swept_wing_uncertain_price.MetaType = 'PCE';
+        MetaOpts_custom_swept_wing_uncertain_price.Input = myInput_custom_swept_wing_uncertain_price;        % probability distribution for the uncertain variables
+        MetaOpts_custom_swept_wing_uncertain_price.FullModel = myModel_custom_swept_wing_uncertain_price;    % the physical model as a UQLab object
+        MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.NSamples = N_train;   % 'experimental design' (ExpDesign): another word for 'training set'
+        if strcmp(MetaOpts_custom_swept_wing_uncertain_price.MetaType, 'Kriging')
+            MetaOpts_custom_swept_wing_uncertain_price.ExpDesign.Sampling = 'User';
+        end
+    
+        flag_parfor = true;             % can we run the physical model in parallel to build the training set? (True/False)
+        seed = 100;                     % seed for reproducibility due to randomness in sampling the training set
+        N_train_increment = 5;          % we will increment the training set size until we reach convergence
+        N_train_max = 5;                % training budget (i.e., maximum number of training points allowed)
+        % run a test to check if surrogates are actually faster than classical MC for mean and sigma estimation  
+        % recommended only for cheap models (to find the true mean and sigma, we need a large MC with the physical model) 
+        flag_test_for_mean_and_sigma = false;
+    
+        % Plots generator for parameter sweeps for the uncertain variables
+        inputs_name_custom_swept_wing_uncertain_price = ["Fuel price", "Oil price"];  % list of the names of the uncertain variables
+        outputs_name_custom_swept_wing_uncertain_price = ["Total operating cost"];    % list of the names of the QIs
+        N_outputs_custom_swept_wing_uncertain_price = length(outputs_name_custom_swept_wing_uncertain_price);           % number of quantities of interest (QIs)
+        descriptive_title_for_plots_custom_swept_wing_uncertain_price = sprintf('%s surrogate', MetaOpts_custom_swept_wing_uncertain_price.MetaType);
+        N_eval = 100;                                                        % number of discretisation points for each uncertain variable (for plots)
+        plotsfolderName = 'custom_sweep_ar_he_wing_uncertain_price_optimisation_uq'; 
+        subfolder_plotsfolderName = 'Bayes_opt_candidate'; 
+        fullPath = fullfile(plotsfolderName, subfolder_plotsfolderName);
+        mkdir(fullPath);
+        mkdir(fullPath, 'plots_uq');
+        custom_swept_wing_uncertain_price =  surrogates_uq(MetaOpts_custom_swept_wing_uncertain_price, N_outputs_custom_swept_wing_uncertain_price, N_train_increment, N_train_max, flag_parfor, seed, fullPath, flag_test_for_mean_and_sigma); % Generates training points and builds the surrogates 
+        elementToSave = custom_swept_wing_uncertain_price; 
+        save(fullfile(fullPath, 'true_model_total_operating_cost_bayes_opt_candidate.mat'), 'elementToSave'); % save the surrogate
+      
+        N_MC_test = 10^6;
+        inputs_for_quantile = uq_getSample(myInput_custom_swept_wing_uncertain_price, N_MC_test, 'MC');      % generate N_MC Monte Carlo points in the uncertain variables' space
+        outputs_for_quantile = uq_evalModel(elementToSave, inputs_for_quantile);   % evaluate the surrogates to get QIs data
+        q = quantile(outputs_for_quantile, [0.05 0.95]);
+        predictive_intervals_90(ii, 1) = q(1);
+        predictive_intervals_90(ii, 2) = q(2);
+    catch ME
+        fprintf('Error: %s\n', ME.message);
+        predictive_intervals_90(ii, 1) = NaN;
+        predictive_intervals_90(ii, 2) = NaN;
+    end
+end
+
+save('bayes_opt_multi_obj_det_opt_for_bf_and_toc_uncertain_price.mat', 'x_opt_multi_obj', 'predictive_intervals_90')
+
+% Optional: y-positions top-to-bottom (first is highest)
+y_axis_intervals = flip([9 8 7 6 5 4 3 2 1]);
+figure; 
+plotIntervals(predictive_intervals_90(:, 1), predictive_intervals_90(:, 2), ...
+    'Y', y_axis_intervals, ...
+    'Color', [0 0 0], ...
+    'LineWidth', 1.5, ...
+    'MarkerSize', 6, ...
+    'FontSize', 10);
+xlabel('Total Operating Cost');  % optional axis label
+title('Pareto points: 90% predictive intervals due to fuel price uncertainty');  % optional title
+
 %%
 function f = myObjectives(x, surrogates_bf_doc)
     f_val = uq_evalModel(surrogates_bf_doc, x);  
@@ -2625,4 +2711,100 @@ function [objective, constraint1] = BayesOptMultiObjectiveConstraints_mean_sigma
         objective = NaN;
         constraint1 = NaN;
     end
+end
+
+
+function h = plotIntervals(L, R, varargin)
+% plotIntervals  Plot horizontal intervals with square endpoints and labels.
+%
+%   h = plotIntervals(L, R) plots intervals whose left endpoints are in L
+%   and right endpoints are in R. L and R must be vectors of the same length.
+%
+%   Optional name-value pairs:
+%     'Y'           : custom y-positions (default: N:-1:1, top to bottom)
+%     'Labels'      : cellstr or numeric vector for labels (e.g., interval widths)
+%     'Color'       : line color (default: [0 0 0])
+%     'LineWidth'   : line width (default: 1.5)
+%     'MarkerSize'  : size of the square markers (default: 6)
+%     'LabelOffset' : x-offset for text label (default: 0.02 * dataRange)
+%     'FontSize'    : label font size (default: 10)
+%
+%   Returns struct h with handles to lines, markers, texts, and axes.
+
+    p = inputParser;
+    p.addParameter('Y', []);
+    p.addParameter('Labels', []);
+    p.addParameter('Color', [0 0 0]);
+    p.addParameter('LineWidth', 1.5);
+    p.addParameter('MarkerSize', 6);
+    p.addParameter('LabelOffset', []);
+    p.addParameter('FontSize', 10);
+    p.parse(varargin{:});
+    opts = p.Results;
+
+    L = L(:); R = R(:);
+    assert(numel(L) == numel(R), 'L and R must have the same length.');
+    N = numel(L);
+
+    % Default y positions: top to bottom
+    if isempty(opts.Y)
+        y = (N:-1:1).';
+    else
+        y = opts.Y(:);
+        assert(numel(y) == N, 'Y must match the length of L and R.');
+    end
+
+    % Compute labels if not provided: use interval length
+    if isempty(opts.Labels)
+        labels = arrayfun(@(a,b) sprintf('%.2g', b-a), L, R, 'UniformOutput', false);
+    elseif isnumeric(opts.Labels)
+        labels = arrayfun(@(v) sprintf('%.2g', v), opts.Labels, 'UniformOutput', false);
+    else
+        labels = opts.Labels(:);
+        assert(numel(labels) == N, 'Labels must have the same length as L and R.');
+    end
+
+    % Axes
+    ax = gca; hold(ax, 'on');
+
+    % Reasonable x padding
+    xmin = min(L); xmax = max(R);
+    xr = xmax - xmin;
+    if xr == 0, xr = 1; end
+    if isempty(opts.LabelOffset)
+        labelOffset = 0.02 * xr;
+    else
+        labelOffset = opts.LabelOffset;
+    end
+
+    % Plot intervals and endpoints
+    h.lines   = gobjects(N,1);
+    h.left    = gobjects(N,1);
+    h.right   = gobjects(N,1);
+    h.text    = gobjects(N,1);
+
+    for i = 1:N
+        h.lines(i) = plot(ax, [L(i) R(i)], [y(i) y(i)], '-', ...
+            'Color', opts.Color, 'LineWidth', opts.LineWidth);
+
+        h.left(i) = plot(ax, L(i), y(i), 's', 'MarkerSize', opts.MarkerSize, ...
+            'MarkerFaceColor', 'w', 'MarkerEdgeColor', opts.Color, 'LineWidth', 1);
+
+        h.right(i) = plot(ax, R(i), y(i), 's', 'MarkerSize', opts.MarkerSize, ...
+            'MarkerFaceColor', opts.Color, 'MarkerEdgeColor', opts.Color, 'LineWidth', 1);
+
+        h.text(i) = text(ax, R(i) + labelOffset, y(i), labels{i}, ...
+            'HorizontalAlignment', 'left', 'VerticalAlignment', 'middle', ...
+            'FontSize', opts.FontSize, 'Color', opts.Color);
+    end
+
+    % Cosmetics
+    ax.YDir = 'normal';
+    ax.YTick = y;
+    ax.YTickLabel = repmat({''}, size(y));  % hide ticks like in your example
+    xlim(ax, [xmin - 0.05*xr, xmax + 0.15*xr]);
+    ylim(ax, [min(y)-1, max(y)+1]);
+    box(ax, 'on');
+
+    h.ax = ax;
 end
