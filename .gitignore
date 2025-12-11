@@ -64,3 +64,4 @@ bin
 !bayes_opt_robust_multi_obj_for_mean_and_sigma_toc.mat
 !bayes_opt_robust_multi_obj_for_mean_and_sigma_toc_fuel_cost.mat
 !ga_multi_obj_det_opt_for_bf_and_toc_converged.mat
+!bayes_opt_multi_obj_det_opt_for_fuel_cost_and_toc_uncertain_price.mat
