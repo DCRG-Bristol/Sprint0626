@@ -38,21 +38,33 @@ for i = 1:opts.MaxIter+1
     eta = ys./max(ys); %normalise span
 
     % Fs_norm = interp1(eta,Fs,obj.RefEta);
-    if obj.UseJones
-        % scale by area
-        A = trapz(eta,Fs)/trapz(eta,gamma_jones(eta,obj.JonesFactor));
-        % scale at a specified eta
-        %         A = Fs_norm./gamma_jones(obj.RefEta,obj.JonesFactor);
-        %get target distribution
-        target_lift = A.*gamma_jones(eta,obj.JonesFactor);
-    else % use prandtl
-        % scale by area
-        A = trapz(eta,Fs)/trapz(eta,gamma_prandtl(eta,obj.PrandtlFactor));
-        % scale at a specified eta
-        %         A = Fs_norm./gamma_prandtl(obj.RefEta,obj.PrandtlFactor);
-        %get target distribution
-        target_lift = A.*gamma_prandtl(eta,obj.PrandtlFactor);
-    end
+    % if obj.UseJones
+    %     % scale by area
+    %     A = trapz(eta,Fs)/trapz(eta,gamma_jones(eta,obj.JonesFactor));
+    %     % scale at a specified eta
+    %     %         A = Fs_norm./gamma_jones(obj.RefEta,obj.JonesFactor);
+    %     %get target distribution
+    %     target_lift = A.*gamma_jones(eta,obj.JonesFactor);
+    % else % use prandtl
+    %     % scale by area
+    %     A = trapz(eta,Fs)/trapz(eta,gamma_prandtl(eta,obj.PrandtlFactor));
+    %     % scale at a specified eta
+    %     %         A = Fs_norm./gamma_prandtl(obj.RefEta,obj.PrandtlFactor);
+    %     %get target distribution
+    %     target_lift = A.*gamma_prandtl(eta,obj.PrandtlFactor);
+    % end
+
+    % use JDC lift dist
+    load(fullfile(fileparts(mfilename('fullpath')),'private','LIFT_DISTRIBUTION_V1.mat'),'lift_dist');
+    % clean lift dist
+    ys = abs([0;lift_dist.Yle;lift_dist.Yle(end)*1.001]);
+    L_eta = ys./max(ys);
+    Ls = [lift_dist.c_cl([1,1:end]);0];
+    gamma_JDC = @(eta)interp1(L_eta,Ls,eta,"makima");
+    A = trapz(eta,Fs)/trapz(eta,gamma_JDC(eta));
+    target_lift = A.*gamma_JDC(eta);
+
+
     %get delta between two distributions
     delta = target_lift-(Fs);
     % re-nomralised eta so that zero at wing root and 1 at tip

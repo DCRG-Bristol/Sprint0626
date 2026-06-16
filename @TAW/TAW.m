@@ -66,6 +66,9 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
 
     properties
         N_seatsPerRow = 5;
+        StaticMargin = 0.35;
+        CLs = [];
+        LogCl = false;
     end
 
 
@@ -87,6 +90,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
         VTPArea = 22.17
         HTP_TCR_root = 0.15;
         SizeEmpenage = true;
+        EnableFairingStiffness = true;
     end
     %landing gear
     properties

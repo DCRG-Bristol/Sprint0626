@@ -6,8 +6,8 @@ arguments
     opts.Mass_factor = 1;
     opts.BeamElements = 25;
     opts.Retracted = false;
-    opts.EnginePos = 5.75;
-    opts.KinkPos = 6.5;
+    opts.EnginePos = 5.5;
+    opts.KinkPos = 5.75;
 end
 % create tag
 if isRight
@@ -43,10 +43,11 @@ tc_tip = obj.TCR_root - 0.03;
 
 % calculate wing planform shape
 D_join = sqrt((D_c/2)^2-(D_c/4)^2)*2;
-tr = 0.349;
-S = @(x)wingArea(obj.WingArea,obj.AR,tr,KinkEta,x,sweep_qtr,0,D_join);
+tr_out = 0.35;
+tr_in = 0.61;
+S = @(x)wingArea(obj.WingArea,obj.AR,tr_out,tr_in,KinkEta,x,D_join,sweep_qtr);
 c = fminsearch(@(x)(S(x)-obj.WingArea).^2,obj.WingArea./sqrt(obj.WingArea*obj.AR)); % get root chord
-[~,cs,LE_sweeps,TE_sweeps] = wingArea(obj.WingArea,obj.AR,tr,KinkEta,c,sweep_qtr,0,D_join); % get final parameters
+[~,cs,LE_sweeps,TE_sweeps] = wingArea(obj.WingArea,obj.AR,tr_out,tr_in,KinkEta,c,D_join,sweep_qtr); % get final parameters
 
 %% calc properties of interest
 HasFoldingWingtip = ~isnan(obj.HingeEta) & obj.HingeEta<1;
@@ -169,9 +170,10 @@ if HasFoldingWingtip
         hinge.Rotation = 0;
         hinge.A = ads.util.roty(-obj.Dihedral(end));
     end
+    [K_fair,M_fair] = obj.GetHingeFairingSurrogate();
     hinge.isLocked = 0;
     hinge.Eta = 1;
-    hinge.K = 1e-3;
+    hinge.K = 1e-3 + K_fair;
     hinge.Name = strcat("SAH",Tag);
     Wing.add(hinge);
     %create hinge mass
@@ -179,7 +181,7 @@ if HasFoldingWingtip
         hingeMass = 0;
     else
         hingeMass = SAH_massFraction(obj.HingeEta)*obj.WingMass/2;
-        hingeMass = hingeMass.* obj.k_hinge;
+        hingeMass = hingeMass.* obj.k_hinge + M_fair;
     end
     obj.Masses.HingeMass = hingeMass*2;
     SAH_mass = baff.Mass(hingeMass,"eta",1,"Name",strcat("SAH_mass",Tag));
@@ -391,22 +393,51 @@ Wing.Stations = Wing.Stations.interpolate(unique([wing_etas,engine.Eta,ldg.Eta])
 FuelMassTotal = ConFuelMassTotal + WingFuelMassTotal;
 end
 
-function [S,cs,le_sweep,te_sweep] = wingArea(S,AR,lambda,k,c,Lambda_LE,Lambda_TE,D_f)
+
+function [S,cs,le_sweep,te_sweep] = wingArea(S,AR,lambda1,lambda2,k,c,D_f,LambdaQtr)
 b = sqrt(AR*S)/2;
-Lambda_LE = atand(c/4*(1-lambda)/(b*(1-k))+tand(Lambda_LE));
 R_f = D_f/2;
-c_t = lambda*c;
-c_r = c+(tand(Lambda_LE)-tand(Lambda_TE))*(k*b-R_f);
-A_1 = (c+c_t)/2*b*(1-k);
-A_2 = (c_r+c)/2*(k*b-D_f/2);
-A_3 = c_r*R_f;
+c_t = lambda1*c;
+c_r = c/lambda2;
+
+A_1 = c_r*R_f;
+L2 = k*b-R_f;
+A_2 = (c_r+c)/2*L2;
+L3 =  b*(1-k);
+A_3 = (c+c_t)/2*L3;
 S = 2*(A_1+A_2+A_3);
+
 cs = [c_r,c_r,c,c_t];
-le_sweep = [0 1 1]*Lambda_LE;
-L = b*(1-k);
-te_sweep_end = atand((tand(Lambda_LE)*L+c_t-c)/L);
-te_sweep = [0,Lambda_TE te_sweep_end];
+
+x_qtr = [0 0 tand(LambdaQtr)*L2 tand(LambdaQtr)*(L2+L3)];
+x_le = -cs.*0.25 + x_qtr;
+x_te = cs.*0.75 + x_qtr;
+
+le_sweep = atand((x_le(2:end)-x_le(1:end-1))./[R_f L2 L3]);
+te_sweep = atand((x_te(2:end)-x_te(1:end-1))./[R_f L2 L3]);
+
+% correct to ensure straight LE
+le_sweep = [0 1 1].* le_sweep(end);
+te_sweep(2) = atand((-c_r + tand(le_sweep(2))*L2 + c)/L2);
 end
+
+
+% function [S,cs,le_sweep,te_sweep] = wingArea(S,AR,lambda,k,c,Lambda_LE,Lambda_TE,D_f)
+% b = sqrt(AR*S)/2;
+% Lambda_LE = atand(c/4*(1-lambda)/(b*(1-k))+tand(Lambda_LE));
+% R_f = D_f/2;
+% c_t = lambda*c;
+% c_r = c+(tand(Lambda_LE)-tand(Lambda_TE))*(k*b-R_f);
+% A_1 = (c+c_t)/2*b*(1-k);
+% A_2 = (c_r+c)/2*(k*b-D_f/2);
+% A_3 = c_r*R_f;
+% S = 2*(A_1+A_2+A_3);
+% cs = [c_r,c_r,c,c_t];
+% le_sweep = [0 1 1]*Lambda_LE;
+% L = b*(1-k);
+% te_sweep_end = atand((tand(Lambda_LE)*L+c_t-c)/L);
+% te_sweep = [0,Lambda_TE te_sweep_end];
+% end
 
 function vals = linspaceConstrained(xs,N)
 if N<length(xs)

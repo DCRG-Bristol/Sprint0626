@@ -256,7 +256,7 @@ obj.OEM = obj.Baff.GetOEM;
 
 %% adjust wing position to have CoM at 35% of MAC
 eta_old = obj.MainWingRHS(1).Eta;
-obj.AdjustCoM(0.35);
+obj.AdjustCoM(obj.StaticMargin);
 delta_wing_eta = abs(eta_old-obj.MainWingRHS(1).Eta);
 obj.WingEta = obj.MainWingRHS(1).Eta;
 

@@ -1,4 +1,4 @@
-classdef NitaPolar < api.AbstractPolar
+classdef NitaShevellPolar < api.AbstractPolar
     %POLAR_SURROGATE Summary of this class goes here
     %   Detailed explanation goes here
 
@@ -27,18 +27,28 @@ classdef NitaPolar < api.AbstractPolar
 
         %extra
         AR
+        SweepAngle;
+        CDw_t2c = 0.14;
+        CDw_max = 0.05;
+        
 
         e_theo = 1; % oswald efficency of the main wing
     end
 
     methods
-        function obj = NitaPolar(Taw,opts)
+        function obj = NitaShevellPolar(Taw,opts)
             arguments
                 Taw
                 opts.ProturbanceDrag = 0.02;
             end
             obj.Taw = Taw;
             obj.AR = obj.Taw.AR;
+
+            if isempty(Taw.SweepAngle) || isnan(Taw.SweepAngle)
+                obj.SweepAngle = real(acosd(0.75.*obj.Taw.Mstar./obj.Taw.ADR.M_c)); 
+            else
+                obj.SweepAngle = Taw.SweepAngle;
+            end
 
 
             pLamFuselage = 0.3*34/obj.Taw.Baff.BluffBody(1).EtaLength; % length of laminar flow 30% of a319 and same length on other aircraft
@@ -60,7 +70,6 @@ classdef NitaPolar < api.AbstractPolar
             obj.CD0_to = sum([obj.CD0_meta_to.CD0]);
             obj.e_to = obj.EstimateOswald(M_app,"NitaNastran")*K_e-0.05;
 
-            sweep = real(acosd(0.75.*obj.Taw.Mstar./obj.Taw.ADR.M_c));
             % obj.CL_TOmax = 0.9*(obj.Taw.Cl_max+obj.Taw.Delta_Cl_to)*cosd(sweep); % Raymer 12.15
             %% landing
             CD0_ld = cast.drag.baff2CD0(obj.Taw.Baff,obj.Taw.WingArea,0,obj.Taw.ADR.V_app/340,"pLamFuselage",pLamFuselage,"pLamWing",0.25);
@@ -71,9 +80,7 @@ classdef NitaPolar < api.AbstractPolar
         end
 
         function [CD0,meta]  = Get_Wing_Cd0(obj)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            CD0 = obj.CD0_c;
+            CD0 = obj.CD0_c + obj.Shevell(obj.Taw.ADR.M_c, obj.Taw.CL_cruise);
             meta = obj.CD0_meta_c;
         end
 
@@ -81,6 +88,7 @@ classdef NitaPolar < api.AbstractPolar
             arguments
                 obj
                 Cl
+                M
                 Phase FlightPhase = FlightPhase.Cruise;
             end
             if obj.Taw.LogCl
@@ -88,7 +96,7 @@ classdef NitaPolar < api.AbstractPolar
             end
             switch Phase
                 case FlightPhase.Cruise
-                    CD = obj.CD0_c + Cl^2/(pi*obj.AR*obj.e_c);
+                    CD = obj.CD0_c + Cl^2/(pi*obj.AR*obj.e_c) + obj.Shevell(M,Cl);
                 case FlightPhase.Landing
                     CD = obj.CD0_ld + Cl^2/(pi*obj.AR*obj.e_ld);
                 case FlightPhase.Approach
@@ -96,7 +104,7 @@ classdef NitaPolar < api.AbstractPolar
                 case FlightPhase.Takeoff
                     CD = obj.CD0_to + Cl^2/(pi*obj.AR*obj.e_to);
             end
-
+            
         end
     end
 end

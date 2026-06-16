@@ -23,33 +23,29 @@ ADP.RibPitch = 0.8;
 ADP.WingBeamElements = 60;
 ADP.WingletHeight = 0;
 ADP.WingIndependentVar = "AR";
-ADP.AR = 12;
+ADP.AR = 11;
 
 %hinge setting
 ADP.HingeEta = 1;
 ADP.IsLightHinge = false;
 
 %Empenage Settings
-ADP.HTPArea = 31;
-ADP.VTPArea = 21.72;
 ADP.V_HT = 1.4626;
 ADP.V_VT = 0.0847;
 ADP.HTP_TCR_root = 0.15;
 ADP.SizeEmpenage = true;
 
-ADP.WingArea = 110;
+ADP.WingArea = 112.3;
 ADP.isWingAreaFixed = false;
-ADP.ldg_scale_factor = 0.85;
+ADP.TargetWingLoading = 500;
 
-ADP.ThrustToWeightRatio = 0.31;
+ADP.ThrustToWeightRatio = 0.33;
 ADP.ProturbanceDrag = 0.019;
 ADP.FowlerSlots = 1;
 ADP.SecondaryMethod = "Planform";
 
 % fuel settings
 ADP.ExtraFuel = 0;
-% ADP.EnforcedConnectorFuelMass = 3238;
-% ADP.EnforcedWingFuelMass = 6126;
 
 %% inital mass estimate
 %initial mission analysis to estimate MTOM
@@ -83,8 +79,16 @@ if ~isfolder('example_data')
 end
 save('example_data/A220_simple.mat','ADP','Lds');
 
+
+
+%% res
 meta = ADP.ToMeta;
 fh.printing.title('','Length',60,'Symbol','=')
 fh.printing.title(sprintf('Trip Fuel: %.3f t',meta.Fuel_trip./1e3),'Length',60,'Symbol','=')
 fh.printing.title(sprintf('MTOM: %.2f t',ADP.MTOM),'Length',60,'Symbol','=')
+
+f = figure(1);clf;
+ADP.BuildBaff(Retracted=false);
+ADP.Baff.draw(f);
+axis equal
 
