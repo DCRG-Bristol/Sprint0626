@@ -3,7 +3,7 @@ load('example_data\A220_simple_rerun.mat')
 % ========================= Set Hyper-parameters =========================
 load("+globalOpt\Trainingset_500.mat")
 idx = find(TrainingSet(:,end)==0)';
-ads.util.printing.title(sprintf('%.0f Errors',length(idx)))
+dcrg.printing.title(sprintf('%.0f Errors',length(idx)))
 idx = idx(1);
 % idx =2;
 disp(TrainingSet(idx,:))
@@ -20,7 +20,7 @@ f = figure(1);clf;ADP.Baff.draw(f);axis equal
 
 %% ============================ Re-run Sizing =============================
 % conduct sizing
-ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
+dcrg.printing.title('Example Surrogates','Length',60,'Symbol','$')
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
 sizeOpts = util.SizingOpts(IncludeGusts=false,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);

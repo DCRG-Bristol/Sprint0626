@@ -3,11 +3,11 @@ arguments
     obj
     Cases (:,1) cast.LoadCase % Load Cases to run
 end
-ads.util.printing.title('Calculating Enforced Loads',Length=60);
+dcrg.printing.title('Calculating Enforced Loads',Length=60);
 
 for i = 1:length(Cases)
     % if ~obj.Silent
-        ads.util.printing.title(sprintf('Running Case %s',Cases(i).Name),Length=60,Symbol='+');
+        dcrg.printing.title(sprintf('Running Case %s',Cases(i).Name),Length=60,Symbol='+');
     % end
     cellArgs = namedargs2cell(Cases(i).ConfigParams);
     obj.SetConfiguration(cellArgs{:});

@@ -19,7 +19,7 @@ arguments
 
 end
 %% get info for flight condtion
-[TAS,~,rho,~,~] = ads.util.get_flight_condition(Mach,alt=alt);
+[TAS,~,rho,~,~] = dcrg.aero.get_flight_condition(Mach,alt=alt);
 % update FE Model
 b = obj.Taw.Span;
 AR = obj.Taw.AR;

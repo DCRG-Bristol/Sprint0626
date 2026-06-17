@@ -7,7 +7,7 @@ arguments
     Tags
     alpha_i_ext=@(x)zeros(size(x));
 end
-    [rho,a,T,P,~,~,~] = ads.util.atmos(Alt./cast.SI.ft);
+    [rho,a,T,P,~,~,~] = dcrg.aero.atmos(Alt./cast.SI.ft);
     V = a*Mach;
     q = 0.5*rho*V^2;
 

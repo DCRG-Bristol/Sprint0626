@@ -220,7 +220,7 @@ classdef TAW < cast.ADP & cast.size.BaffSizing
             meta.Span = obj.Span;
             meta.AspectRatio = obj.AR;
             meta.Length = obj.Baff.BluffBody(1).EtaLength;
-            meta.FuselageRadius = max(arrayfun(@(x)x.Radius,[obj.Baff.BluffBody(1).Stations]));
+            meta.FuselageRadius = max(obj.Baff.BluffBody(1).Stations.Radius);
             meta.Thrust = obj.Thrust;
             meta.SpecificEnergy = obj.FuelType.SpecificEnergy;
             meta.CostPerKilo = obj.FuelType.CostPerKilo;

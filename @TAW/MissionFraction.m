@@ -24,7 +24,7 @@ function [EWF,fs,ts] = MissionFraction(obj,Segments,opts)
                 %calc properties in each section
                 deltaH = hs(2:end)-hs(1:end-1);
                 h_mean = (hs(2:end)-hs(1:end-1))/2;
-                [rho,a] = ads.util.atmos(h_mean);
+                [rho,a] = dcrg.aero.atmos(h_mean);
                 M = (M(2:end)+M(1:end-1))/2;
                 deltaf = 1;
                 t = 0;
@@ -42,9 +42,9 @@ function [EWF,fs,ts] = MissionFraction(obj,Segments,opts)
                 end      
                 f = deltaf;        
             case 'cast.mission.Cruise'
-                [rho,a,~,P] = ads.util.atmos(s.StartAlt);
-                [rho_s,a_s,~,P_s] = ads.util.atmos(0);
-                VCAS = ads.util.calibrated_airspeed(s.Mach,P,P_s,a_s,1.4);
+                [rho,a,~,P] = dcrg.aero.atmos(s.StartAlt);
+                [rho_s,a_s,~,P_s] = dcrg.aero.atmos(0);
+                VCAS = fh.calibrated_airspeed(s.Mach,P,P_s,a_s,1.4);
                 if ~isnan(s.CAS) && VCAS>s.CAS
                     TAS = ads.util.equivelent_true_airspeed(P,rho,P_s,rho_s,1.4,s.CAS);
                     M_cruise = TAS/a;
@@ -76,7 +76,7 @@ function [EWF,fs,ts] = MissionFraction(obj,Segments,opts)
                 end
                 f = deltaf;
             case 'cast.mission.Loiter'
-                [rho,a,~,P] = ads.util.atmos(s.StartAlt);
+                [rho,a,~,P] = dcrg.aero.atmos(s.StartAlt);
                 if opts.OverideLD
                     CL = EWF*opts.M_TO*9.81/(1/2*rho*(a*s.Mach)^2*obj.WingArea);
                     CD = obj.AeroSurrogate.Get_Cd(CL,s.Mach,FlightPhase.Cruise);
@@ -89,7 +89,7 @@ function [EWF,fs,ts] = MissionFraction(obj,Segments,opts)
             case 'cast.mission.Contingency'
                 % assumes all sections prior make up trip fuel and add 5 minutes 
                 % loiter or 3% trip fuel, whichever is higher
-                [rho,a] = ads.util.atmos(s.StartAlt);
+                [rho,a] = dcrg.aero.atmos(s.StartAlt);
                 if opts.OverideLD
                     CL = EWF*opts.M_TO*9.81/(1/2*rho*(a*s.Mach)^2*obj.WingArea);
                     CD = obj.AeroSurrogate.Get_Cd(CL,s.Mach,FlightPhase.Cruise);

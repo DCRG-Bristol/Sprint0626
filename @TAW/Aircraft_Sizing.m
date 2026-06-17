@@ -13,7 +13,7 @@ r_harm = ADP.ADR.Range;
     % tune harmonic
     ADP.size_harmonic(SizingOpts);
     for i = 1:opts.MaxSteps    
-        ads.util.printing.title(sprintf('iter %.0f: MTOM %.0f kg',i,ADP.MTOM),Length=60,Symbol='~');
+        dcrg.printing.title(sprintf('iter %.0f: MTOM %.0f kg',i,ADP.MTOM),Length=60,Symbol='~');
         %% run sizing
         mtom = ADP.MTOM;
         if ADP.Size_wing
@@ -33,7 +33,7 @@ r_harm = ADP.ADR.Range;
         ADP.size_harmonic(SizingOpts);
         %% tune for subharmonic point
         if ~isnan(SizingOpts.SubHarmonic(1))
-            ads.util.printing.title(sprintf('Subharmonic Loop'),Length=60,Symbol='~');
+            dcrg.printing.title(sprintf('Subharmonic Loop'),Length=60,Symbol='~');
             % need to adjust Extra Fuel to hit secondary point of payload
             % range diagram
             res_extra = [];
@@ -41,7 +41,7 @@ r_harm = ADP.ADR.Range;
                 ADP.size_harmonic(SizingOpts);
                 [r,p] = ADP.PR_diagram();
                 r = r./cast.SI.Nmile;
-                idx = ads.util.tern(p(2) == p(3),3,2);
+                idx = dcrg.tern(p(2) == p(3),3,2);
                 r_cur = interp1(p(idx:end)/p(1),r(idx:end),SizingOpts.SubHarmonic(1));
                 delta = SizingOpts.SubHarmonic(2) - r_cur;
                 res_extra = cast.util.opt.dynBoundary(res_extra,ADP.ExtraFuel,delta,"UpdateBoundary",false);
@@ -53,7 +53,7 @@ r_harm = ADP.ADR.Range;
                 end
                 ADP.ExtraFuel = max(0,cast.util.opt.gd(res_extra,ADP.Mf_Fuel*ADP.MTOM/r(2)*delta,1e3));
             end
-            ads.util.printing.title(sprintf('Subharmonic Loop Completed on iter %.0f: Extra Fuel %.2f Tn',ii,ADP.ExtraFuel/1e3),Length=60,Symbol='~');
+            dcrg.printing.title(sprintf('Subharmonic Loop Completed on iter %.0f: Extra Fuel %.2f Tn',ii,ADP.ExtraFuel/1e3),Length=60,Symbol='~');
         end
         %% update estimates
         [r,p] = ADP.PR_diagram();

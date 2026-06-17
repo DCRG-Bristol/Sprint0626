@@ -9,7 +9,7 @@ ADP.SweepAngle = 25;
 
 %% ============================ Re-run Sizing =============================
 % conduct sizing
-ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
+dcrg.printing.title('Example Surrogates','Length',60,'Symbol','$')
 sizeOpts = util.SizingOpts(IncludeGusts=false,...
     IncludeTurb=false,BinFolder='bin_size');
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts);

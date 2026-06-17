@@ -63,7 +63,7 @@ fprintf('Trip Fuel: %.1f Tn\n',(1-prod(fs([1:5,10,11])))*93.5);
 %% sizing Mano
 res = [];
 % now size with DLM for manouevres only
-ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
+dcrg.printing.title('Example Surrogates','Length',60,'Symbol','$')
 sizeOpts = util.SizingOpts(IncludeGusts=false,IncludeTurb=false,BinFolder=bin_folder);
 [ADP,res_mtom,Lds,time,isError,Cases] = ADP.Aircraft_Sizing(sizeOpts);
 % get data during cruise

@@ -24,7 +24,7 @@ for i = 1:length(wings)
     etas = [wings(i).Stations.Eta];
     a_sts = wings(i).AeroStations.interpolate(etas);
     for j = 1:length(etas)
-        Ps(:,ii) = wings(i).GetGlobalWingPos(etas(j),a_sts(j).BeamLoc);
+        Ps(:,ii) = wings(i).GetGlobalWingPos(etas(j),a_sts.BeamLoc(j));
         Fs(:,ii) = wings(i).GetGlobalWingPos(etas(j),0.25);
         ii = ii + 1;
     end

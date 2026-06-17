@@ -11,7 +11,7 @@ ADP.ConstraintAnalysis();
 ADP.BuildBaff;
 % ============================ Re-run Sizing =============================
 % conduct sizing
-ads.util.printing.title('Example Surrogates','Length',60,'Symbol','$')
+dcrg.printing.title('Example Surrogates','Length',60,'Symbol','$')
 SubHarmonic = [0.8,3000./cast.SI.Nmile];
 sizeOpts = util.SizingOpts(IncludeGusts=false,...
     IncludeTurb=false,BinFolder='bin_size',SubHarmonic=SubHarmonic);

@@ -13,7 +13,7 @@ arguments
     solOpts.GetEigenVectors = false;
 end
 %% get info for flight condtion
-[TAS,CAS,rho,~,~] = ads.util.get_flight_condition(Mach,"alt",solOpts.Alts);
+[TAS,CAS,rho,~,~] = dcrg.aero.get_flight_condition(Mach,"alt",solOpts.Alts);
 % update FE Model
 b = obj.Taw.Span;
 AR = obj.Taw.AR;

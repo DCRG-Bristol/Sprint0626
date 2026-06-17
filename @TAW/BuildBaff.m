@@ -8,7 +8,7 @@ end
 
 % cruise condition
 M_c = obj.ADR.M_c;
-[rho,a] = ads.util.atmos(obj.ADR.Alt_cruise);
+[rho,a] = dcrg.aero.atmos(obj.ADR.Alt_cruise);
 q_c = 0.5*rho*(M_c*a)^2;
 Cl_cruise = obj.MTOM*obj.Mf_TOC*9.81/(0.5*rho*(M_c*a)^2*obj.WingArea);
 
@@ -154,7 +154,7 @@ end
 
 HT_RHS = baff.Wing.FromLETESweep(b_HT/2,c_r,[0 1],sweep_le,sweep_te,0.25,...
     baff.Material.Stiff,"ThicknessRatio",[obj.HTP_TCR_root,tc_tip]);
-HT_RHS.A = baff.util.rotz(90)*baff.util.rotx(180);
+HT_RHS.A = dcrg.rotz(90)*dcrg.rotx(180);
 HT_RHS.Eta = etaHTP;
 HT_RHS.Offset = [0;0;0];
 HT_RHS.DistributeMass(m_HT/2,10,"Method","ByVolume","tag","HTP_RHS_mass","BeamOffset",-0.15);
@@ -169,10 +169,9 @@ HT_RHS.ControlSurfaces = baff.ControlSurface('ele_RHS',[0.2 1],[0.4 0.4]);
 
 HT_LHS = baff.Wing.FromLETESweep(b_HT/2,c_r,[0 1],sweep_le,sweep_te,0.25,...
     baff.Material.Stiff,"ThicknessRatio",[obj.HTP_TCR_root,tc_tip]);
-for i = 1:length(HT_LHS.Stations)
-    HT_LHS.Stations(i).EtaDir(1) = -HT_LHS.Stations(i).EtaDir(1);
-end
-HT_LHS.A = baff.util.rotz(90)*baff.util.rotx(180);
+HT_LHS.Stations.EtaDir(1,:) = -HT_LHS.Stations.EtaDir(1,:);
+
+HT_LHS.A = dcrg.rotz(90)*dcrg.rotx(180);
 HT_LHS.Eta = etaHTP;
 HT_LHS.Offset = [0;0;0];
 HT_LHS.DistributeMass(m_HT/2,10,"Method","ByVolume","tag","HTP_LHS_mass","BeamOffset",-0.15);
@@ -216,7 +215,7 @@ x_mgc_vt = y_mgc_vt*tan(sweep_le)+mgc*0.25;
 
 VT = baff.Wing.FromLETESweep(b_VT,c_r,[0 1],sweep_le,sweep_te,0.25,...
     baff.Material.Stiff,"ThicknessRatio",[obj.HTP_TCR_root,tc_tip]);
-VT.A = baff.util.rotz(90)*baff.util.rotx(180)*baff.util.roty(90);
+VT.A = dcrg.rotz(90)*dcrg.rotx(180)*dcrg.roty(90);
 VT.Eta = etaVTP;
 R = fuselage.Stations.interpolate(etaVTP).Radius;
 VT.Offset = [0;0;R];

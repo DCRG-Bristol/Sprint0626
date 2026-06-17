@@ -21,7 +21,7 @@ S_ref = 10;
 S = wing.PlanformArea;
 
 % dive dyanamic pressure
-[rho,a] = ads.util.atmos(ADP.ADR.Alt_cruise);
+[rho,a] = dcrg.aero.atmos(ADP.ADR.Alt_cruise);
 M_d = ADP.ADR.M_c+0.05;
 q_d = 0.5*rho*(a*M_d)^2;
 
@@ -38,18 +38,18 @@ M_slat =  S_slat*sigma_slat/9.81;
 % fixed TE Structure
 p_flap = S_flap/(0.35*S);
 if p_flap>1
-    % ads.util.printing.title([sprintf('WARNING - Flap Percentage %.0f',p_flap*100),'%%'],'Length',60);
+    % dcrg.printing.title([sprintf('WARNING - Flap Percentage %.0f',p_flap*100),'%%'],'Length',60);
 end
 
 sigma_fte = 2.6*sigma_ref*(refMass*refSpan/5e7)^0.0544;
-sigma_sup = ads.util.tern(FowlerSlots == 1,40,100);
+sigma_sup = dcrg.tern(FowlerSlots == 1,40,100);
 sigma_fte = p_flap*(sigma_fte+sigma_sup) + max((1-p_flap),0)*sigma_fte; % eq.11.65 Torenbeek
 M_fte = (1-0.65)*S*sigma_fte/9.81;
 
 % TE flap
 if S_flap>0
     k_sup = 1.6; % assumes fowler flaps
-    k_slot = ads.util.tern(FowlerSlots == 1,1,1.5);
+    k_slot = dcrg.tern(FowlerSlots == 1,1,1.5);
     sigma_flap = 1.7*k_sup*k_slot*sigma_ref*(1+(refMass/1e6)^0.35);
     M_flap = S_flap*sigma_flap/9.81; % eq 11.66 Torenbeek
 else

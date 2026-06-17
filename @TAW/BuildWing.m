@@ -18,7 +18,7 @@ end
 
 % define some top-level params
 M_c = obj.ADR.M_c;
-[rho,a] = ads.util.atmos(obj.ADR.Alt_cruise);
+[rho,a] = dcrg.aero.atmos(obj.ADR.Alt_cruise);
 if obj.NoKink
     opts.KinkPos = D_c/2;
 end
@@ -74,7 +74,7 @@ tr = [obj.TCR_root,interp1(etas_centre2tip([2,end]),[obj.TCR_root,tc_tip],etas_c
 wingMat = baff.Material.Aluminium;
 wingMat.rho = wingMat.rho*obj.WingDensityFactor;
 Connector = baff.Wing.FromLETESweep(seg_lengths(1),cs(1),[0 1],LE_sweeps(1),TE_sweeps(1),0.4,wingMat,ThicknessRatio=tr([1,2]),Dihedral=0);
-Connector.A = baff.util.rotz(90)*baff.util.rotx(180);
+Connector.A = dcrg.rotz(90)*dcrg.rotx(180);
 Connector.Eta = obj.WingEta;
 Connector.Offset = [0;0;-D_c/4];
 Connector.Name = string(['Wing_Connector',Tag]);
@@ -86,15 +86,11 @@ if obj.UpdateRoot
     % apply wing twist
     aero_eta = [Connector.AeroStations.Eta]*(etas_centre2tip(2)-etas_centre2tip(1))+etas_centre2tip(1);
     twists = interp1(obj.InterpEtas,obj.InterpTwists,aero_eta);
-    for ti = 1:length(Connector.AeroStations)
-        Connector.AeroStations(ti).Twist = twists(ti);
-    end
+    Connector.AeroStations.Twist = twists;
 end
 
 if ~isRight
-    for i = 1:length(Connector.Stations)
-        Connector.Stations(i).EtaDir(1) = -Connector.Stations(i).EtaDir(1);
-    end
+        Connector.Stations.EtaDir(1,:) = -Connector.Stations.EtaDir(1,:);
 end
 
 %% fuel volume
@@ -128,11 +124,11 @@ deltaEta = (obj.Span/2)/20/Wing.EtaLength;
 
 % make cosine distribution if no wingtip
 aero_eta = linspace(0,1,max(3,round(1/deltaEta)));
-delta_eta = Wing.AeroStations(end).Eta-Wing.AeroStations(1).Eta;
+delta_eta = Wing.AeroStations.Eta(end)-Wing.AeroStations.Eta(1);
 if HasFoldingWingtip
     aero_eta = aero_eta.*delta_eta + Wing.AeroStations(1).Eta;
 else
-    aero_eta = round(fliplr(cos(2*pi/4*aero_eta)),5).*delta_eta + Wing.AeroStations(1).Eta;
+    aero_eta = round(fliplr(cos(2*pi/4*aero_eta)),5).*delta_eta + Wing.AeroStations.Eta(1);
 end
 if length(aero_eta)<2
     warning('hello')
@@ -143,16 +139,12 @@ Wing.AeroStations = Wing.AeroStations.interpolate(aero_eta);
 % apply wing twist
 aero_eta = [Wing.AeroStations.Eta]*(etas_centre2tip(4)-etas_centre2tip(2))+etas_centre2tip(2);
 twists = interp1(obj.InterpEtas,obj.InterpTwists,aero_eta);
-for ti = 1:length(Wing.AeroStations)
-    Wing.AeroStations(ti).Twist = twists(ti);
-end
+Wing.AeroStations.Twist = twists;
 
 %convert to draggable item
 Wing = cast.drag.DraggableWing(Wing);
 if ~isRight
-    for i = 1:length(Wing.Stations)
-        Wing.Stations(i).EtaDir(1) = -Wing.Stations(i).EtaDir(1);
-    end
+        Wing.Stations.EtaDir(1,:) = -Wing.Stations.EtaDir(1,:);
 end
 Connector.add(Wing);
 
@@ -162,11 +154,11 @@ if HasFoldingWingtip
     %% create hinge
     hinge = baff.Hinge();
     if isRight
-        hinge.HingeVector = baff.util.rotz(-obj.FlareAngle)*[0;-1;0];
+        hinge.HingeVector = dcrg.rotz(-obj.FlareAngle)*[0;-1;0];
         hinge.Rotation = -0;
         hinge.A = ads.util.roty(obj.Dihedral(end));
     else
-        hinge.HingeVector = baff.util.rotz(obj.FlareAngle)*[0;-1;0];
+        hinge.HingeVector = dcrg.rotz(obj.FlareAngle)*[0;-1;0];
         hinge.Rotation = 0;
         hinge.A = ads.util.roty(-obj.Dihedral(end));
     end
@@ -267,7 +259,7 @@ if obj.WingletHeight>0
     te_sweep = sign(c_bar)*atand(abs(c_bar)/h);
     Winglet = baff.Wing.FromLETESweep(h,cr,[0 1],LE_sweep,te_sweep,0.4,...
         baff.Material.Stiff,"ThicknessRatio",[1 1]*tr(end));
-    Winglet.A = baff.util.roty(90);
+    Winglet.A = dcrg.roty(90);
     Winglet.Eta = 1;
     Winglet = cast.drag.DraggableWing(Winglet);
     Winglet.Name = string(['winglet',Tag]);
@@ -310,7 +302,7 @@ engine_mat = baff.Material.Stiff;
 eta = [0 0.6 1];
 radius = [1 1 1/1.4]*obj.Engine.Diameter/2;
 engine = baff.BluffBody.FromEta(obj.Engine.Length,eta,radius,"Material",engine_mat,"NStations",4);
-engine.A = baff.util.rotz(-90);
+engine.A = dcrg.rotz(-90);
 engine.Eta = (opts.EnginePos-D_join/2)/(Wing.EtaLength);
 engine.Offset = [0;obj.Engine.Length*1.4;obj.Engine.Diameter/2+0.1];
 engine.Name = string(['engine',Tag]);

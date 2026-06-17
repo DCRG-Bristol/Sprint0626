@@ -19,13 +19,13 @@ for i = 1:100
 
     if abs(delta)<1
         if opts.Verbose
-            ads.util.printing.title(sprintf('Harmonic Loop completed on iter %.0f: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol=' ');
+            dcrg.printing.title(sprintf('Harmonic Loop completed on iter %.0f: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol=' ');
         end
         return
     end
 end
 if opts.Verbose
-    ads.util.printing.title(sprintf('No Harmonic Convergence Continuing Anyway: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol='E');
+    dcrg.printing.title(sprintf('No Harmonic Convergence Continuing Anyway: MTOM %.0f kg',i,obj.MTOM),Length=60,Symbol='E');
 end
 warning('No harmonic Convergence - continuing anyway')
 end

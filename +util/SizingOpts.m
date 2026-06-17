@@ -20,6 +20,7 @@ classdef SizingOpts < cast.nast.Opts
         PosManoG = 2.5;
         NegManoG = -1;
         SubHarmonic = [nan,nan];
+        Silent = true;
     end
     
     methods
@@ -137,7 +138,7 @@ classdef SizingOpts < cast.nast.Opts
             obj.CleanUp = opts.CleanUp ;
             obj.BinFolder = opts.BinFolder;
             obj.Verbose = opts.Verbose;
-            obj.Silent = opts.Silent;
+            % obj.Silent = opts.Silent;
         end
     end
 end

@@ -18,7 +18,7 @@ e_theo = 1/(1 + f(taperRatio + deltaTaper)*obj.AR);
 KeF = 1-2*(max([fus.Stations.Radius])*2/fus.EtaLength)^2; % fuselage factor (Eq. 40)
 ae = -0.001521;
 be = 10.82;
-KeM = ads.util.tern(Mach<=0.3,1,ae*(Mach/0.3-1)^be+1); % Compressibility factor (Eq. 41)
+KeM = dcrg.tern(Mach<=0.3,1,ae*(Mach/0.3-1)^be+1); % Compressibility factor (Eq. 41)
 
 Q = 1/(e_theo*KeF);
 P = 0.38*obj.CD0;

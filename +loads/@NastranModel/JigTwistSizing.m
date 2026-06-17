@@ -14,11 +14,11 @@ arguments
     RunOpts.TruelySilent = true;
 end
 % get dynamic pressure
-[rho,a,T,P,~,~,~] = ads.util.atmos(Case.Alt./cast.SI.ft);
+[rho,a,T,P,~,~,~] = dcrg.aero.atmos(Case.Alt./cast.SI.ft);
 V = a*Case.Mach;
 q = 0.5*rho*V^2;
 
-ads.util.printing.title('Jig Twist Optimisation',Length=60,Symbol='~');
+dcrg.printing.title('Jig Twist Optimisation',Length=60,Symbol='~');
 deltas = ones(1,opts.MaxIter+1)*inf;
 
 for i = 1:opts.MaxIter+1
@@ -75,17 +75,17 @@ for i = 1:opts.MaxIter+1
     delta_aoa = AoA-opts.TargetAoA;
     deltas(i) = max(abs(delta_angle).*(Fs(e_i)./max(Fs(e_i))));
     if deltas(i)<opts.TargetDelta && delta_aoa<opts.TargetDelta
-        ads.util.printing.title(sprintf('Jig Twist Complete! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),Length=60,Symbol='~');
+        dcrg.printing.title(sprintf('Jig Twist Complete! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),Length=60,Symbol='~');
         break
     elseif i>1 && delta_aoa<opts.TargetDelta && abs(deltas(i)-deltas(i-1))<opts.TargetDelta/2 %close enough
-        ads.util.printing.title(sprintf('Jig Twist Converged! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),Length=60,Symbol='~');
+        dcrg.printing.title(sprintf('Jig Twist Converged! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),Length=60,Symbol='~');
         break
     elseif i == opts.MaxIter+1
-        ads.util.printing.title(sprintf('Warning Jig Twist Max Step Reached! Delta %0.3f deg',deltas(i)),Length=60,Symbol='!');
+        dcrg.printing.title(sprintf('Warning Jig Twist Max Step Reached! Delta %0.3f deg',deltas(i)),Length=60,Symbol='!');
         error('CAST:SizingError','Jig Twist Sizing did not converge.')
     end
     if opts.Verbose
-        ads.util.printing.title(sprintf('Jig Twist Step %.0f. Delta %0.3f deg. AoA %0.2f deg',i,deltas(i),AoA),Length=60,Symbol='~');
+        dcrg.printing.title(sprintf('Jig Twist Step %.0f. Delta %0.3f deg. AoA %0.2f deg',i,deltas(i),AoA),Length=60,Symbol='~');
     end
     if i>1 && abs(deltas(i)-deltas(i-1))<0.05 && abs(delta_aoa)>0.05
         %focus on AoA

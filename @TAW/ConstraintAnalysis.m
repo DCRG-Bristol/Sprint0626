@@ -41,10 +41,10 @@ obj.StaticStabilityCorrections();
 %     plot(WSx,TW_TO,"DisplayName",'TO')
 % end
 % % Service Ceiling
-% TLR = @(x)ads.util.atmos(x)/ads.util.atmos(0);
+% TLR = @(x)dcrg.aero.atmos(x)/dcrg.aero.atmos(0);
 % TW = cast.ca.sg.ROC_Mach_Vv(WSx,obj,0.78,100./cast.SI.ft.*cast.SI.min,obj.ADR.Alt_max)/TLR(obj.ADR.Alt_max);
 % TWi_tmp = interp1(WSx,TW,WS_ldg,"linear");
-% TWi = ads.util.tern(TWi<TWi_tmp,TWi_tmp,TWi);
+% TWi = dcrg.tern(TWi<TWi_tmp,TWi_tmp,TWi);
 % if opts.Plot
 %     plot(WSx,TW,"DisplayName",'Ceil') % Service ceiling of 40,000ft
 % end
@@ -52,14 +52,14 @@ obj.StaticStabilityCorrections();
 % % engine out ROC TO
 % TW = 2*cast.ca.sg.ROC_VSR(WSx,obj,1.13,obj.CL_TOmax,2.4,0);
 % TWi_tmp = interp1(WSx,TW,WS_ldg,"linear");
-% TWi = ads.util.tern(TWi<TWi_tmp,TWi_tmp,TWi);
+% TWi = dcrg.tern(TWi<TWi_tmp,TWi_tmp,TWi);
 % if opts.Plot
 %     plot(WSx,TW,"DisplayName",'Eng-Out ROC TO')
 % end
 % % engine out ROC Approach
 % TW =2*cast.ca.sg.ROC_VSR(WSx,obj,1.4,obj.CL_max,2.1,0);
 % TWi_tmp = interp1(WSx,TW,WS_ldg,"linear");
-% TWi = ads.util.tern(TWi<TWi_tmp,TWi_tmp,TWi);
+% TWi = dcrg.tern(TWi<TWi_tmp,TWi_tmp,TWi);
 % if opts.Plot
 %     plot(WSx,TW,"DisplayName",'Eng-Out ROC App')
 % end
@@ -69,7 +69,7 @@ obj.StaticStabilityCorrections();
 % for i = 1:length(heights)
 %     TW =cast.ca.sg.ROC_Mach_Vv(WSx,obj,obj.ADR.M_c,obj.ADR.Alt_cruise/(25*60),heights(i))/TLR(heights(i));
 %     TWi_tmp = interp1(WSx,TW,WS_ldg,"linear");
-%     TWi = ads.util.tern(TWi<TWi_tmp,TWi_tmp,TWi);
+%     TWi = dcrg.tern(TWi<TWi_tmp,TWi_tmp,TWi);
 %     if opts.Plot
 %         plot(WSx,TW,"DisplayName",sprintf('ROC FL%03.0f',heights(i).*cast.SI.ft./1e2));
 %     end
