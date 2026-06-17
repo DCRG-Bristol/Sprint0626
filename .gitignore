@@ -53,6 +53,13 @@ bin
 .DS_Store/
 */.DS_Store/
 
+################################ Pictures #################################
+*.png
+*.pdf
+*.jpeg
+*.jpg
+*.svg
+
 ################################ Exceptions ###############################
 !@TAW/private/*.mat
 !+aero/@AeroSurrogateV2/private/*.mat

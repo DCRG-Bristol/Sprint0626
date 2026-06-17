@@ -1,8 +1,9 @@
 % clear all
 load('example_data\A220_simple.mat')
 
-%% ========================= Count Error =========================
-load("+globalOpt\Trainingset_5000.mat")
+% ========================= Count Error =========================
+filename = "+globalOpt\Trainingset_5000.mat";
+load(filename)
 idx = find(TrainingSet(:,end)==0 | isnan(TrainingSet(:,end)))';
 
 
@@ -40,7 +41,7 @@ catch
 end
 end
 
-save("+globalOpt\Trainingset_5000.mat",'TrainingSet')
+save(filename,'TrainingSet')
 %% ======================== Get Mission Fuel Burn =========================
 % [~,~,trip_fuel,trip_time] = ADP.MJperPAX(3000./cast.SI.Nmile,1);
 % ads.Log.info('')
