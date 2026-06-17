@@ -3,8 +3,6 @@ arguments
     obj
     Mach double % Mach Number
     opts.NumAttempts = 3
-    opts.Silent = true;
-    opts.TruelySilent = false;
     solOpts.g = obj.g;
     solOpts.Alts = 60e3:-1e3:0;
     solOpts.GravVector = obj.GravVector;
@@ -45,7 +43,7 @@ sol.DoFs = 4;
 sol.ROLL.Value = deg2rad(solOpts.Roll);
 
 %% run Nastran
-binFolder = sol.run(obj.fe,Silent=opts.Silent,NumAttempts=opts.NumAttempts,...
-    BinFolder=obj.BinFolder,TruelySilent=opts.TruelySilent);
+binFolder = sol.build(obj.fe,obj.BinFolder);
+sol.run(binFolder,NumAttempts=opts.NumAttempts,StopOnFatal=false);
 h5_file = fullfile(binFolder,"bin","sol144.h5");
 end

@@ -19,6 +19,6 @@ else
     Cases(end+1) = cast.LoadCase.Manoeuvre(obj.ADR.M_c,obj.ADR.Alt_cruise.*cast.SI.ft,1,config=config,...
         SafetyFactor=1,Idx=101,Name='cruise_FF10');
 end
-[Lds,~] = obj.GetLoads(Cases,CleanUp=opts.CleanUp,BinFolder=opts.BinFolder,Verbose=opts.Verbose,Silent=opts.Silent);
+[Lds,~] = obj.GetLoads(Cases,CleanUp=opts.CleanUp,BinFolder=opts.BinFolder);
 end
 

@@ -7,8 +7,8 @@ arguments
 end
 
 obj.SetConfiguration(FuelMass=obj.Taw.MTOM*obj.Taw.Mf_Fuel*obj.Taw.Mf_TOC,IsLocked=opts.IsLocked)
-[BinFolder,sol] = obj.Sol144(Case.Mach,Case.Alt,Case.LoadFactor,TruelySilent=false,aoa=opts.aoa);
-% [BinFolder,sol] = obj.Sol144(Case.Mach,Case.Alt,Case.LoadFactor,TruelySilent=~obj.Verbose,aoa=opts.aoa);
+[BinFolder,sol] = obj.Sol144(Case.Mach,Case.Alt,Case.LoadFactor,aoa=opts.aoa);
+% [BinFolder,sol] = obj.Sol144(Case.Mach,Case.Alt,Case.LoadFactor,aoa=opts.aoa);
 filename = fullfile(BinFolder,'bin','sol144.h5');
 
 res_rhs = util.get_meta_aero(obj,filename,["Wing_RHS","Connector_RHS"]);

@@ -3,8 +3,6 @@ arguments
     obj
     Mach double % Mach Number
     opts.NumAttempts = 1
-    opts.Silent = true;
-    opts.TruelySilent = false;
 
     solOpts.Alts = 60e3:-1e3:0;
     solOpts.DispIDs = [];
@@ -40,8 +38,11 @@ sol.ModalDampingPercentage = solOpts.ModalDamping;
 sol.UpdateID(IDs);
 
 %% run Nastran
-[res,binFolder] = sol.run(obj.fe,Silent=opts.Silent,NumAttempts=opts.NumAttempts,...
-    BinFolder=obj.BinFolder,StopOnFatal=true,TruelySilent=opts.TruelySilent);
+binFolder = sol.build(obj.fe,obj.BinFolder);
+sol.run(binFolder,NumAttempts=opts.NumAttempts,...
+    StopOnFatal=false,cmdLineArgs=cmdLineArgs);
+res = sol.ExtractResults(binFolder,IncludeEigenVec=solOpts.GetEigenVectors);
+
 %populate res with other data
 for i = 1:length(res)
     [err,idx] = min(abs(res(i).RHO_RATIO-rho));

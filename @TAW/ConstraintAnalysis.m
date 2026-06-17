@@ -26,7 +26,7 @@ switch obj.WingIndependentVar
     case 'AR'
         obj.Span = sqrt(obj.AR*obj.WingArea);
 end
-obj.StaticStabilityCorrections();
+% obj.StaticStabilityCorrections();
 
 
 %CONSTRAINTANALYSIS Summary of this function goes here

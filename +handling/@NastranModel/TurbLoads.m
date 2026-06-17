@@ -5,13 +5,13 @@ arguments
     idx double
 end
 %get 1g cruise loads
-BinFolder = obj.Sol144(Case.Mach,Case.Alt,1,TruelySilent=~obj.Verbose);
+BinFolder = obj.Sol144(Case.Mach,Case.Alt,1);
 
 filename = fullfile(BinFolder,'bin','sol144.h5');
 Loads_1g = obj.ExtractStaticLoads(filename,obj.Tags).SetIdx(idx);
 
 %get incremental gust loads
-obj.Sol146(Case.Mach,Case.Alt,BinFolder=BinFolder, DispIDs=nan, TruelySilent=~obj.Verbose,Type='Turb');
+obj.Sol146(Case.Mach,Case.Alt,BinFolder=BinFolder, DispIDs=nan,Type='Turb');
 filename = fullfile(BinFolder,'bin','sol146.h5');
 Loads_turb = obj.ExtractTurbLoads(filename,obj.Tags);
 

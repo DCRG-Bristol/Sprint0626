@@ -91,7 +91,7 @@ For estimating loads with Nastran, please see the Readme in the +loads folder.
 In the Lightweight conceptual sizing version, the surrogate model currently assumes an elliptical lift distribution to quickly estimate forces and moments (see `+loads.EnforcedLiftDist`).
 
 ### Estimating Aerodynamic Drag
-The TAW class uses the property `ADP.AeroSurrogate` during mission analysis to estimate drag at a given C_l. `ADP.AeroSurrogate` is an instance of the Abstract class `+api.AbstractPolar`
+The TAW class uses the property `ADP.AeroSurrogate` during mission analysis to estimate drag at a given C_l. `ADP.AeroSurrogate` is an instance of the Abstract class `cast.size.AbstractPolar`
 ```
 classdef (Abstract) AbstractPolar  
  methods (Abstract)

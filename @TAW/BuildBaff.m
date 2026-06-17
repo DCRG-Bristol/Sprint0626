@@ -155,7 +155,7 @@ end
 
 HT_RHS = baff.Wing.FromLETESweep(b_HT/2,c_r,[0 1],sweep_le,sweep_te,0.25,...
     baff.Material.Stiff,"ThicknessRatio",[obj.HTP_TCR_root,tc_tip]);
-HT_RHS.A = baff.util.rotz(90)*baff.util.rotx(180);
+HT_RHS.A = dcrg.rotzd(90)*dcrg.rotxd(180);
 HT_RHS.Eta = etaHTP;
 HT_RHS.Offset = [0;0;0];
 HT_RHS.DistributeMass(m_HT/2,10,"Method","ByVolume","tag","HTP_RHS_mass","BeamOffset",-0.15);
@@ -173,7 +173,7 @@ HT_LHS = baff.Wing.FromLETESweep(b_HT/2,c_r,[0 1],sweep_le,sweep_te,0.25,...
 HT_LHS.Stations.EtaDir(1,:) = -HT_LHS.Stations.EtaDir(1,:);
 
 
-HT_LHS.A = baff.util.rotz(90)*baff.util.rotx(180);
+HT_LHS.A = dcrg.rotzd(90)*dcrg.rotxd(180);
 HT_LHS.Eta = etaHTP;
 HT_LHS.Offset = [0;0;0];
 HT_LHS.DistributeMass(m_HT/2,10,"Method","ByVolume","tag","HTP_LHS_mass","BeamOffset",-0.15);
@@ -220,7 +220,7 @@ x_mgc_vt = y_mgc_vt*tan(sweep_le)+mgc*0.25;
 
 VT = baff.Wing.FromLETESweep(b_VT,c_r,[0 1],sweep_le,sweep_te,0.25,...
     baff.Material.Stiff,"ThicknessRatio",[obj.HTP_TCR_root,tc_tip]);
-VT.A = baff.util.rotz(90)*baff.util.rotx(180)*baff.util.roty(90);
+VT.A = dcrg.rotzd(90)*dcrg.rotxd(180)*dcrg.rotyd(90);
 VT.Eta = etaVTP;
 R = fuselage.Stations.interpolate(etaVTP).Radius;
 VT.Offset = [0;0;R];
@@ -265,13 +265,17 @@ delta_wing_eta = abs(eta_old-obj.MainWingRHS(1).Eta);
 obj.WingEta = obj.MainWingRHS(1).Eta;
 
 % get aft most CG position 
+
 xs = obj.GetCoMRange();
+
 x_aft = max(xs);
 delta_com = abs(x_aft/fuselage.EtaLength - obj.AftEta);
 obj.AftEta = x_aft/fuselage.EtaLength;
+
 
 if max(delta_wing_eta,delta_com)>0.001
     optsCell = namedargs2cell(opts);
     obj.BuildBaff(optsCell{:});
 end
+
 end

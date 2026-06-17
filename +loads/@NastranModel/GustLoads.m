@@ -6,9 +6,9 @@ arguments
 end
 %get 1g cruise loads
 if Case.Nonlinear
-    BinFolder = obj.Sol144nonlin(Case.Mach,Case.Alt,1,TruelySilent=~obj.Verbose);      
+    BinFolder = obj.Sol144nonlin(Case.Mach,Case.Alt,1);      
 else
-    BinFolder = obj.Sol144(Case.Mach,Case.Alt,1,TruelySilent=~obj.Verbose);
+    BinFolder = obj.Sol144(Case.Mach,Case.Alt,1);
 end
 filename = fullfile(BinFolder,'bin','sol144.h5');
 Loads_1g = obj.ExtractStaticLoads(filename,obj.Tags).SetIdx(idx);
@@ -19,7 +19,7 @@ catch
 end
 
 %get incremental gust loads
-obj.Sol146(Case.Mach,Case.Alt, DispIDs=nan, TruelySilent=~obj.Verbose);
+obj.Sol146(Case.Mach,Case.Alt, DispIDs=nan);
 filename = fullfile(BinFolder,'bin','sol146.h5');
 
 Loads_gust_max = obj.ExtractDynamicLoads(filename,obj.Tags,isMax=true).max();

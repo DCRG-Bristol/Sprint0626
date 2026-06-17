@@ -5,7 +5,7 @@ N_pax = 140; % Number of passengers
 N_eng = 2; % Number of engines
 
 %% ========================= Set Hyper-parameters =========================
-nSamplesvec = [500];
+nSamplesvec = [1000,5000];
 %nSamplesvec = [1 3 5];
 % type = 'test';
 types = {'training'};
@@ -19,18 +19,17 @@ for i = 1:length(nSamplesvec)
         else
             inputScaled = lhsdesign(nSamples,5);
         end
-        % inputs = [12 22; ... %AR
-        %     0.5 1; ... %Norm SAH pos
-        %     5 35;... % SAH Flare angle
-        %     0.5 0.85;... % Cruise speed (mach)
-        %     0 40]; %Qtr-Chord sweep angle
+        % expand by 5%
+        inputScaled = inputScaled.* 1.1 - 0.05;
+        % define input bounds
         inputs = [11 23; ... %AR
-            0.45 0.95; ... %Norm SAH pos
+            0.475 0.925; ... %Norm SAH pos
             10 20;... % SAH Flare angle
             0.45 0.9;... % Cruise speed (mach)
             0 45]; %Qtr-Chord sweep angle
-        inScale = inputs(:,1)-inputs(:,2);
-        inputUnscaled = inputScaled*diag(inScale)+ones(size(inputScaled))*diag(inputs(:,2));
+        inScale = inputs(:,2)-inputs(:,1);
+
+        inputUnscaled = inputScaled*diag(inScale)+ones(size(inputScaled))*diag(inputs(:,1));
 
         printoutput = false;
         saveMat = false;
@@ -42,6 +41,7 @@ for i = 1:length(nSamplesvec)
         % for k = 311
         % % sampleOut = sizeSample(inputUnscaled(i,:),saveMat,printoutput);
             try
+                ads.Log.setLevel("Warn");
                 sampleOut = sizeSample(inputUnscaled(k,:),saveMat,printoutput);
                 outArray(k,:) = sampleOut;
             catch ME

@@ -7,18 +7,16 @@ arguments
     opts.MaxIter = 20           % Max iterations
     opts.TargetDelta = 0.01     % target mean twist change
     opts.TargetAoA = 3;         % target trim AoA
-    opts.Verbose = true;
+    opts.ShowPlot = false;
     
     RunOpts.NumAttempts = 1
-    RunOpts.Silent = true;
-    RunOpts.TruelySilent = true;
 end
 % get dynamic pressure
 [rho,a,T,P,~,~,~] = ads.util.atmos(convlength(Case.Alt,'ft','m'));
 V = a*Case.Mach;
 q = 0.5*rho*V^2;
 
-ads.util.printing.title('Jig Twist Optimisation',Length=60,Symbol='~');
+ads.Log.info('Jig Twist Optimisation','low');
 deltas = ones(1,opts.MaxIter+1)*inf;
 
 for i = 1:opts.MaxIter+1
@@ -63,18 +61,17 @@ for i = 1:opts.MaxIter+1
     delta_aoa = AoA-opts.TargetAoA;
     deltas(i) = max(abs(delta_angle).*(Fs(e_i)./max(Fs(e_i))));
     if deltas(i)<opts.TargetDelta && delta_aoa<opts.TargetDelta
-        ads.util.printing.title(sprintf('Jig Twist Complete! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),Length=60,Symbol='~');
+        ads.Log.debug(sprintf('Jig Twist Complete! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),'low');
         break
     elseif i>1 && delta_aoa<opts.TargetDelta && abs(deltas(i)-deltas(i-1))<opts.TargetDelta/2 %close enough
-        ads.util.printing.title(sprintf('Jig Twist Converged! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),Length=60,Symbol='~');
+        ads.Log.debug(sprintf('Jig Twist Converged! Delta %0.3f deg. AoA %0.2f deg',deltas(i),AoA),'low');
         break
     elseif i == opts.MaxIter+1
-        ads.util.printing.title(sprintf('Warning Jig Twist Max Step Reached! Delta %0.3f deg',deltas(i)),Length=60,Symbol='!');
+        ads.Log.warn(sprintf('Warning Jig Twist Max Step Reached! Delta %0.3f deg',deltas(i)));
         error('CAST:SizingError','Jig Twist Sizing did not converge.')
     end
-    if opts.Verbose
-        ads.util.printing.title(sprintf('Jig Twist Step %.0f. Delta %0.3f deg. AoA %0.2f deg',i,deltas(i),AoA),Length=60,Symbol='~');
-    end
+
+    ads.Log.trace(sprintf('Jig Twist Step %.0f. Delta %0.3f deg. AoA %0.2f deg',i,deltas(i),AoA));
     if i>1 && abs(deltas(i)-deltas(i-1))<0.05 && abs(delta_aoa)>0.05
         %focus on AoA
         delta_angle = delta_aoa;
@@ -95,7 +92,7 @@ for i = 1:opts.MaxIter+1
     %smooth the curve
     %     obj.InterpTwists = polyval(polyfit(obj.InterpEtas,obj.InterpTwists,6),obj.InterpEtas);
 
-    if opts.Verbose
+    if opts.ShowPlot
         f = figure(11);
         clf;
 

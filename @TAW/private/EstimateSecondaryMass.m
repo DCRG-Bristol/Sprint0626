@@ -38,7 +38,7 @@ M_slat =  S_slat*sigma_slat/9.81;
 % fixed TE Structure
 p_flap = S_flap/(0.35*S);
 if p_flap>1
-    % ads.util.printing.title([sprintf('WARNING - Flap Percentage %.0f',p_flap*100),'%%'],'Length',60);
+    % ads.Log.warn([sprintf('WARNING - Flap Percentage %.0f',p_flap*100),'%%']);
 end
 
 sigma_fte = 2.6*sigma_ref*(refMass*refSpan/5e7)^0.0544;

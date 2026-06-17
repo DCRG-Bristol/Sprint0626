@@ -1,4 +1,4 @@
-function [Lds,BinFolder] = JigTwistSizing(obj,Case,idx,opts,RunOpts)
+function [Lds,BinFolder] = JigTwistSizing2(obj,Case,idx,opts,RunOpts)
 arguments
     obj
     Case cast.LoadCase
@@ -24,9 +24,28 @@ for i = 1:opts.MaxIter+1
     cellArgs = namedargs2cell(Case.ConfigParams);
     obj.SetConfiguration(cellArgs{:});
     %run Nastran
-    optsCell = namedargs2cell(RunOpts);
-    BinFolder = obj.Sol144(Case.Mach,Case.Alt,Case.LoadFactor,optsCell{:});
-    filename = fullfile(BinFolder,'bin','sol144.h5');
+    if i < 3
+        RunOpts.DBALL = true;
+        optsCell = namedargs2cell(RunOpts);
+        BinFolder = obj.Sol144(Case.Mach,Case.Alt,Case.LoadFactor,optsCell{:});
+        filename = fullfile(BinFolder,'bin','sol144.h5');
+    else
+        % get DMI cards
+        IDs = obj.fe.UpdateIDs();
+        Aeros = obj.fe.AeroSurfaces;
+        angles = Aeros.get_twists();
+        [cl_alpha,c_m] = Aeros.get_correction_factor();
+        [~,idx] = sort([Aeros.ID]);
+        DMI_W2GJ = mni.printing.cards.DMI('W2GJ',deg2rad(angles(:)),2,1,0);
+        DMI_WKK = mni.printing.cards.DMI('WKK',reshape([cl_alpha;c_m],[],1),3,1,0);       
+        %make solver object
+        sol = ads.nast.Sol144();
+        sol.UpdateID(IDs);
+        % run NASTRAN
+        sol.restart(obj.BinFolder,[DMI_W2GJ],NumAttempts=RunOpts.NumAttempts...
+            ,cmdLineArgs=struct('scr','no','dbs','sol144'));
+        filename = fullfile(BinFolder,'bin','restart.h5');
+    end
     %extract trimAoA
     resFile = mni.result.hdf5(filename);
     tRes = resFile.read_trim;
@@ -36,33 +55,21 @@ for i = 1:opts.MaxIter+1
     eta = ys./max(ys); %normalise span
 
     % Fs_norm = interp1(eta,Fs,obj.RefEta);
-    % if obj.UseJones
-    %     % scale by area
-    %     A = trapz(eta,Fs)/trapz(eta,gamma_jones(eta,obj.JonesFactor));
-    %     % scale at a specified eta
-    %     %         A = Fs_norm./gamma_jones(obj.RefEta,obj.JonesFactor);
-    %     %get target distribution
-    %     target_lift = A.*gamma_jones(eta,obj.JonesFactor);
-    % else % use prandtl
-    %     % scale by area
-    %     A = trapz(eta,Fs)/trapz(eta,gamma_prandtl(eta,obj.PrandtlFactor));
-    %     % scale at a specified eta
-    %     %         A = Fs_norm./gamma_prandtl(obj.RefEta,obj.PrandtlFactor);
-    %     %get target distribution
-    %     target_lift = A.*gamma_prandtl(eta,obj.PrandtlFactor);
-    % end
-
-    % use JDC lift dist
-    load(fullfile(fileparts(mfilename('fullpath')),'private','LIFT_DISTRIBUTION_V1.mat'),'lift_dist');
-    % clean lift dist
-    ys_L = abs([0;lift_dist.Yle;lift_dist.Yle(end)*1.001]);
-    L_eta = ys_L./max(ys_L);
-    Ls = [lift_dist.c_cl([1,1:end]);0];
-    gamma_JDC = @(eta)interp1(L_eta,Ls,abs(eta),"makima");
-    A = trapz(eta,Fs)/trapz(eta,gamma_JDC(eta));
-    target_lift = A.*gamma_JDC(eta);
-    % f = figure(111);clf;hold on;plot(eta,target_lift);plot(eta,target_lift2)
-
+    if obj.UseJones
+        % scale by area
+        A = trapz(eta,Fs)/trapz(eta,gamma_jones(eta,obj.JonesFactor));
+        % scale at a specified eta
+        %         A = Fs_norm./gamma_jones(obj.RefEta,obj.JonesFactor);
+        %get target distribution
+        target_lift = A.*gamma_jones(eta,obj.JonesFactor);
+    else % use prandtl
+        % scale by area
+        A = trapz(eta,Fs)/trapz(eta,gamma_prandtl(eta,obj.PrandtlFactor));
+        % scale at a specified eta
+        %         A = Fs_norm./gamma_prandtl(obj.RefEta,obj.PrandtlFactor);
+        %get target distribution
+        target_lift = A.*gamma_prandtl(eta,obj.PrandtlFactor);
+    end
 
     %get delta between two distributions
     delta = target_lift-(Fs);
@@ -88,6 +95,7 @@ for i = 1:opts.MaxIter+1
         error('CAST:SizingError','Jig Twist Sizing did not converge.')
     end
     ads.Log.trace(sprintf('Jig Twist Step %.0f. Delta %0.3f deg. AoA %0.2f deg',i,deltas(i),AoA));
+
     if i>1 && abs(deltas(i)-deltas(i-1))<0.05 && abs(delta_aoa)>0.05
         %focus on AoA
         delta_angle = delta_aoa;

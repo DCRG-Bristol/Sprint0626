@@ -44,7 +44,6 @@ classdef NastranModel < cast.ADP & cast.nast.LoadsSurrogate
                 Taw TAW
             end
             obj.Taw = Taw;
-            obj.Verbose = false;
             obj.BinFolder = "bin_aem";
         end
     end

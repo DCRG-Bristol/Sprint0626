@@ -5,8 +5,6 @@ arguments
     alt double  % Altitude in ft
 
     opts.NumAttempts = 3
-    opts.Silent = true;
-    opts.TruelySilent = false;
 
     solOpts.NGust = 12;
     solOpts.Type string {mustBeMember(solOpts.Type,{'1MC','Turb','Both'})} = '1MC';
@@ -57,7 +55,8 @@ end
 sol.UpdateID(IDs);
 
 %% run Nastran
-binFolder = sol.run(obj.fe,Silent=opts.Silent,NumAttempts=opts.NumAttempts,...
-    BinFolder=obj.BinFolder,TruelySilent=opts.TruelySilent);
+binFolder = sol.build(obj.fe,obj.BinFolder);
+sol.run(binFolder,NumAttempts=opts.NumAttempts,...
+    StopOnFatal=false,cmdLineArgs=cmdLineArgs);
 end
 
